@@ -1,0 +1,173 @@
+
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import Layout from "@/components/Layout";
+import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+
+const adminLoginSchema = z.object({
+  email: z.string().email({
+    message: "Please enter a valid email address",
+  }),
+  password: z.string().min(6, {
+    message: "Password must be at least 6 characters",
+  }),
+});
+
+type AdminLoginFormValues = z.infer<typeof adminLoginSchema>;
+
+const AdminLogin = () => {
+  const { adminLogin, user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Redirect if already logged in as admin
+  React.useEffect(() => {
+    if (user && !authLoading) {
+      console.log('User already logged in, checking admin status...');
+      if (user.role === 'ADMIN') {
+        console.log('Admin user detected, redirecting to admin dashboard');
+        navigate("/admin");
+      } else {
+        console.log('Non-admin user, redirecting to home');
+        navigate("/");
+      }
+    }
+  }, [user, authLoading, navigate]);
+
+  const form = useForm<AdminLoginFormValues>({
+    resolver: zodResolver(adminLoginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (data: AdminLoginFormValues) => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      console.log("Attempting admin login");
+      
+      const success = await adminLogin(data.email, data.password);
+      if (success) {
+        console.log("Admin login successful, navigating to admin dashboard");
+        navigate("/admin");
+      }
+    } catch (error) {
+      console.error('Admin login submission error:', error);
+      toast.error('Admin login failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center min-h-[80vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-800 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <div className="flex justify-center items-center min-h-[80vh] w-full">
+        <Card className="w-full max-w-md shadow-lg border-green-800">
+          <CardHeader className="bg-gradient-to-r from-green-900 to-black text-white rounded-t-md">
+            <CardTitle className="text-center text-2xl">Admin Access</CardTitle>
+            <CardDescription className="text-center text-gray-100">
+              Administrative Panel Login
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6 bg-gradient-to-b from-white to-green-50">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input 
+                          id="admin-email"
+                          name="email"
+                          type="email"
+                          placeholder="Enter email"
+                          {...field}
+                          autoComplete="username"
+                          disabled={isSubmitting}
+                          className="transition-all hover:border-green-500 focus:ring-green-700"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input 
+                          id="admin-password"
+                          name="password"
+                          type="password"
+                          placeholder="••••••••" 
+                          {...field}
+                          autoComplete="current-password"
+                          disabled={isSubmitting}
+                          className="transition-all hover:border-green-500 focus:ring-green-700"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button 
+                  type="submit" 
+                  className="w-full bg-green-800 hover:bg-green-900"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Signing In...
+                    </div>
+                  ) : (
+                    "Sign In"
+                  )}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-2 bg-green-50 rounded-b-md py-4">
+            <div className="text-center w-full">
+              <Link to="/login" className="text-sm text-green-800 hover:text-green-700">
+                Regular User Login
+              </Link>
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
+    </Layout>
+  );
+};
+
+export default AdminLogin;

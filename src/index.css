@@ -1,0 +1,280 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 45 20% 96%; /* #FAF3E0 warm off-white for light mode */
+    --foreground: 237 18% 18%; /* #2B2D42 dark text for light mode */
+
+    --card: 38 100% 97%; /* #FFF8EE light warm card */
+    --card-foreground: 237 18% 18%;
+
+    --popover: 38 100% 97%;
+    --popover-foreground: 237 18% 18%;
+
+    --primary: 27 100% 68%; /* #FFA45B warm orange accent */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 40 60% 90%;
+    --secondary-foreground: 237 18% 18%;
+
+    --muted: 40 30% 92%;
+    --muted-foreground: 237 18% 45%;
+
+    --accent: 27 100% 68%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 20% 85%;
+    --input: 40 20% 85%;
+    --ring: 27 100% 68%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 38 100% 97%;
+    --sidebar-foreground: 237 18% 18%;
+    --sidebar-primary: 27 100% 68%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 40 60% 90%;
+    --sidebar-accent-foreground: 237 18% 18%;
+    --sidebar-border: 40 20% 85%;
+    --sidebar-ring: 27 100% 68%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 0 0% 9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 0 0% 9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 142 71% 29%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 142 71% 29%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 142.4 71.8% 29.2%;
+    
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 142 71% 29%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 142 71% 29%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    width: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+  }
+  
+  html, body, #root {
+    min-height: 100vh;
+    width: 100%;
+  }
+}
+
+@layer components {
+  .product-title {
+    @apply font-bold text-lg leading-tight;
+  }
+  
+  .product-grid {
+    @apply grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/90 transition-all;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-white hover:bg-secondary/90 transition-all;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  /* FIX: Completely remove all white hover effects */
+  button:hover,
+  a:hover,
+  [role="button"]:hover,
+  .hover\:bg-white:hover,
+  .hover\:bg-white\/10:hover,
+  .hover\:bg-white\/20:hover,
+  .hover\:bg-white\/30:hover,
+  .hover\:bg-white\/40:hover,
+  .hover\:bg-white\/50:hover,
+  .hover\:bg-white\/60:hover,
+  .hover\:bg-white\/70:hover,
+  .hover\:bg-white\/80:hover,
+  .hover\:bg-white\/90:hover {
+    background-color: transparent !important;
+    color: inherit !important;
+  }
+  
+  /* Custom hover styles for buttons */
+  button:hover, 
+  a:hover,
+  .button:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+    transition: all 0.2s ease-in-out;
+  }
+  
+  /* Fix for table hover */
+  .table tr:hover td {
+    @apply text-inherit bg-green-100/10 dark:bg-green-900/20;
+  }
+
+  /* Button hover states */
+  .btn, .button, button[type="submit"] {
+    @apply hover:brightness-110 active:brightness-90 transition-all;
+  }
+  
+  /* Mobile responsive improvements */
+  .container {
+    @apply w-full px-2 sm:px-4 mx-auto;
+  }
+  
+  .card {
+    @apply w-full;
+  }
+  
+  .mobile-full {
+    @apply w-full max-w-full mx-0 px-2 sm:px-4;
+  }
+  
+  .table-container {
+    @apply w-full overflow-x-auto;
+  }
+  
+  /* Hide scrollbar class */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Custom animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out forwards;
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Add spacing fixes for the product tabs */
+.tabs-list {
+  @apply flex justify-between overflow-x-auto;
+}
+
+.tabs-list button {
+  @apply whitespace-nowrap px-4 py-2 mx-1;
+}
+
+/* Fix spacing in tabs */
+[role="tablist"] {
+  @apply space-x-2;
+}
+
+/* Responsive layout fixes */
+@media (max-width: 767px) {
+  .card {
+    @apply rounded-md;
+  }
+  
+  .container {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  h1, h2, h3 {
+    @apply text-lg sm:text-xl md:text-2xl lg:text-3xl;
+  }
+
+  .table-container {
+    @apply -mx-4 px-0 overflow-x-auto;
+  }
+  
+  .table {
+    @apply min-w-full;
+  }
+  
+  /* Fix bottom spacing for main content to account for sticky footer nav */
+  main {
+    padding-bottom: 80px !important;
+  }
+}
+
+/* Fix unwanted white background */
+.bg-white { 
+  @apply dark:bg-gray-900;
+}
+
+/* Hide scrollbar for carousels */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

@@ -1,0 +1,84 @@
+
+@keyframes slide {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-280px * 4));
+  }
+}
+
+.animate-slide {
+  animation: slide 30s linear infinite;
+}
+
+.animate-slide:hover {
+  animation-play-state: paused;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+/* Theme colors overrides */
+:root {
+  --primary: 142 71% 29%;
+  --primary-foreground: 0 0% 100%;
+  --background: 0 0% 100%;
+  --card: 0 0% 100%;
+}
+
+/* Tab styling for offers */
+.tabs-list-offers {
+  background: linear-gradient(to right, #22c55e, #16a34a);
+  border-radius: 9999px;
+  padding: 4px;
+}
+
+.tab-trigger-offers {
+  border-radius: 9999px;
+  color: white;
+  padding: 6px 12px;
+  transition: all 0.2s ease;
+}
+
+.tab-trigger-offers[data-state="active"] {
+  background-color: white;
+  color: #16a34a;
+}
+
+/* Product card image styles */
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-image-container {
+  overflow: hidden;
+}
+
+.product-image-container:hover .product-image {
+  transform: scale(1.05);
+}
