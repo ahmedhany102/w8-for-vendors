@@ -10,10 +10,11 @@ import { toast } from 'sonner';
 import CartDatabase from "@/models/CartDatabase";
 import { ProductVariant } from '@/hooks/useProductVariants';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useVendorContext } from '@/hooks/useVendorContext';
 
 interface ProductCardProps {
-  product: Product & { 
-    vendor_name?: string; 
+  product: Product & {
+    vendor_name?: string;
     vendor_slug?: string;
     vendor_logo_url?: string;
   };
@@ -26,6 +27,9 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const navigate = useNavigate();
   const { isFavorite, toggleFavorite } = useFavorites();
+
+  // Get vendor context for vendor-scoped navigation
+  const { isVendorContext, vendorSlug } = useVendorContext();
 
   useEffect(() => {
     if (variants.length > 0) {
@@ -40,13 +44,13 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
   }
 
   // Use variant image if available, otherwise fallback to product main image
-  const mainImage = selectedVariant?.image_url || 
+  const mainImage = selectedVariant?.image_url ||
     (product.mainImage && product.mainImage !== "" ? product.mainImage : null) ||
     (product.main_image && product.main_image !== "" ? product.main_image : null) ||
     (product.image_url && product.image_url !== "" ? product.image_url : null) ||
     (product.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0]) ||
     "/placeholder.svg";
-  
+
   // Check if product is out of stock - Fix availability logic
   // Priority: variants > sizes > direct stock/inventory fields
   const checkStockAvailability = () => {
@@ -65,24 +69,24 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
     return stockValue <= 0 && inventoryValue <= 0;
   };
   const isOutOfStock = checkStockAvailability();
-  
+
   // Calculate price (base price + variant adjustment)
   const basePrice = product.price || 0;
-  const finalPrice = selectedVariant 
+  const finalPrice = selectedVariant
     ? basePrice + (selectedVariant.price_adjustment || 0)
-    : (Array.isArray(product.sizes) && product.sizes.length > 0 
-        ? Math.min(...product.sizes.filter(s => s && s.stock > 0).map(s => s.price || basePrice)) 
-        : basePrice);
+    : (Array.isArray(product.sizes) && product.sizes.length > 0
+      ? Math.min(...product.sizes.filter(s => s && s.stock > 0).map(s => s.price || basePrice))
+      : basePrice);
 
   // Calculate original price if there is a discount
-  const originalPrice = product.hasDiscount && product.discount 
-    ? finalPrice * (100 / (100 - product.discount)) 
+  const originalPrice = product.hasDiscount && product.discount
+    ? finalPrice * (100 / (100 - product.discount))
     : finalPrice;
 
   // Quick add to cart handler with enhanced error handling
   const handleQuickAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (isOutOfStock) {
       toast.error("المنتج غير متوفر حالياً");
       return;
@@ -97,14 +101,14 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
           mainImage: selectedVariant.image_url,
           inventory: selectedVariant.stock
         };
-        
+
         const cartDb = CartDatabase.getInstance();
         await cartDb.addToCart(productForCart, 'متاح', selectedVariant.label, 1);
       } else {
         // Legacy system for products without variants
         let size = "";
         let color = "";
-        
+
         const productSizes = Array.isArray(product.sizes) ? product.sizes : [];
         if (productSizes.length > 0) {
           const availableSize = productSizes.find(s => s && s.stock > 0);
@@ -129,8 +133,13 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
   };
 
   // Handle product click to view details
+  // Uses vendor-scoped URL when in vendor context
   const handleProductClick = () => {
-    navigate(`/product/${product.id}`);
+    if (isVendorContext && vendorSlug) {
+      navigate(`/store/${vendorSlug}/product/${product.id}`);
+    } else {
+      navigate(`/product/${product.id}`);
+    }
   };
 
   // Handle favorite toggle
@@ -140,7 +149,7 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
   };
 
   return (
-    <Card 
+    <Card
       className={`group cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-green-300 border-gray-200 ${className}`}
       onClick={handleProductClick}
       style={{ minHeight: '380px' }}
@@ -159,7 +168,7 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
             }}
           />
         </AspectRatio>
-        
+
         {/* Favorites button */}
         <Button
           variant="ghost"
@@ -167,18 +176,18 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
           className="absolute top-2 left-2 bg-white/90 hover:bg-white z-10 h-8 w-8"
           onClick={handleToggleFavorite}
         >
-          <Heart 
+          <Heart
             className={`h-4 w-4 ${isFavorite(product.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
           />
         </Button>
-        
+
         {/* Discount badge */}
         {product.hasDiscount && product.discount && (
           <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold z-10">
             -{product.discount}%
           </div>
         )}
-        
+
         {/* Out of stock overlay */}
         {isOutOfStock && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-t-lg z-20">
@@ -191,10 +200,10 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
         <h3 className="font-semibold text-sm mb-1 line-clamp-2 group-hover:text-primary transition-colors">
           {product.name}
         </h3>
-        
+
         {/* Vendor link */}
         {product.vendor_name && product.vendor_slug && (
-          <Link 
+          <Link
             to={`/store/${product.vendor_slug}`}
             onClick={(e) => e.stopPropagation()}
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors mb-2"
@@ -203,7 +212,7 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
             <span>بواسطة: {product.vendor_name}</span>
           </Link>
         )}
-        
+
         {/* Price section */}
         <div className="flex items-center gap-2 mb-2">
           <span className="text-lg font-bold text-primary">
@@ -228,11 +237,10 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
                     e.stopPropagation();
                     setSelectedVariant(variant);
                   }}
-                  className={`w-4 h-4 rounded-full border-2 ${
-                    selectedVariant?.id === variant.id 
-                      ? 'border-primary shadow-md' 
+                  className={`w-4 h-4 rounded-full border-2 ${selectedVariant?.id === variant.id
+                      ? 'border-primary shadow-md'
                       : 'border-gray-300'
-                  }`}
+                    }`}
                   style={{
                     backgroundImage: `url(${variant.image_url})`,
                     backgroundSize: 'cover',
@@ -276,11 +284,10 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
               {product.sizes.slice(0, 4).map((sizeInfo, index) => (
                 <span
                   key={index}
-                  className={`text-xs px-1 py-0.5 rounded border ${
-                    sizeInfo.stock > 0 
-                      ? 'bg-primary/10 border-primary/20 text-primary' 
+                  className={`text-xs px-1 py-0.5 rounded border ${sizeInfo.stock > 0
+                      ? 'bg-primary/10 border-primary/20 text-primary'
                       : 'bg-muted border-border text-muted-foreground'
-                  }`}
+                    }`}
                 >
                   {sizeInfo.size}
                 </span>
@@ -297,11 +304,10 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
         <Button
           onClick={handleQuickAddToCart}
           disabled={isOutOfStock}
-          className={`w-full text-sm ${
-            isOutOfStock 
-              ? 'bg-muted text-muted-foreground cursor-not-allowed' 
+          className={`w-full text-sm ${isOutOfStock
+              ? 'bg-muted text-muted-foreground cursor-not-allowed'
               : 'bg-primary hover:bg-primary/90 text-primary-foreground'
-          }`}
+            }`}
         >
           <ShoppingCart className="w-4 h-4 mr-2" />
           {isOutOfStock ? 'غير متوفر' : 'أضف للسلة'}

@@ -1,43 +1,46 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { useVendorBySlug, useVendorProducts, useVendorCategories } from '@/hooks/useVendors';
+import { useVendorProducts, useVendorCategories } from '@/hooks/useVendors';
+import { useVendorContext } from '@/hooks/useVendorContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import ProductCard from '@/components/ProductCard';
-import { Store, Search, Package, ArrowRight, Share2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Store, Package, ArrowRight } from 'lucide-react';
 import { useBestSellers, useLastViewed } from '@/hooks/useSections';
 import { ProductCarousel } from '@/components/sections';
 import { useVendorAds } from '@/hooks/useVendorAds';
+import VendorStoreHeader from '@/components/vendor/VendorStoreHeader';
 
 const StorePage = () => {
-  const { vendorSlug } = useParams<{ vendorSlug: string }>();
   const navigate = useNavigate();
-  const { vendor, loading: vendorLoading, error: vendorError } = useVendorBySlug(vendorSlug);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
 
+  // Get vendor context - NO MANUAL DETECTION
+  // VendorContextProvider guarantees vendorId is available
+  const { vendorId, vendorSlug } = useVendorContext();
+
+  // Vendor data hooks - use vendorId from context
   const { products, loading: productsLoading } = useVendorProducts(
-    vendor?.id,
-    selectedSubcategory || selectedCategory,  // Use subcategory if selected, else parent
+    vendorId,
+    selectedSubcategory || selectedCategory,
     searchQuery
   );
-  const { mainCategories, subcategories } = useVendorCategories(vendor?.id);
+  const { mainCategories, subcategories } = useVendorCategories(vendorId);
 
   // Get child categories when parent is selected
   const childCategories = selectedCategory ? subcategories(selectedCategory) : [];
 
-  // Vendor-specific sections
-  const { products: bestSellers, loading: bestSellersLoading } = useBestSellers(vendor?.id, 12);
-  const { products: lastViewed, loading: lastViewedLoading } = useLastViewed(vendor?.id, 10);
+  // Vendor-specific sections - NO VENDORID PARAMS, read from context
+  const { products: bestSellers, loading: bestSellersLoading } = useBestSellers(12);
+  const { products: lastViewed, loading: lastViewedLoading } = useLastViewed(10);
 
   // Vendor ads
-  const { ads: vendorAds } = useVendorAds(vendor?.id);
+  const { ads: vendorAds } = useVendorAds(vendorId);
 
-  // Compute ads ONCE, OUTSIDE JSX (no magic number ranges)
+  // Compute ads ONCE, OUTSIDE JSX
   const topAd = vendorAds.find(ad => ad.position === 0);
   const middleAds = vendorAds.filter(ad => ad.position === 10);
 
@@ -45,207 +48,34 @@ const StorePage = () => {
   const hasFiltersActive = !!(searchQuery || selectedCategory);
 
   const handleAddToCart = async (product: any, size: string, quantity?: number) => {
-    navigate(`/product/${product.id}`);
+    navigate(`/store/${vendorSlug}/product/${product.id}`);
   };
-
-  const handleShare = async () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: vendor?.name,
-          text: `تفقد متجر ${vendor?.name}`,
-          url: url
-        });
-      } catch (err) {
-        // User cancelled or error
-      }
-    } else {
-      await navigator.clipboard.writeText(url);
-      toast.success('تم نسخ رابط المتجر');
-    }
-  };
-
-  if (vendorLoading) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-6">
-          <Skeleton className="w-full h-48 md:h-64 rounded-lg mb-6" />
-          <div className="flex items-center gap-4 mb-8">
-            <Skeleton className="w-24 h-24 rounded-full" />
-            <div>
-              <Skeleton className="h-8 w-48 mb-2" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-64 rounded-lg" />
-            ))}
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (vendorError || !vendor) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-12 text-center">
-          <Store className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-          <h1 className="text-2xl font-bold mb-2">المتجر غير موجود</h1>
-          <p className="text-muted-foreground mb-6">
-            عذراً، لم نتمكن من العثور على هذا المتجر
-          </p>
-          <Button onClick={() => navigate('/vendors')}>
-            <ArrowRight className="w-4 h-4 ml-2" />
-            العودة للمتاجر
-          </Button>
-        </div>
-      </Layout>
-    );
-  }
 
   return (
-    <Layout>
-      {/* 1. Store Cover (Banner) - Layer 0 */}
-      <div className="relative z-0 w-full h-48 md:h-64 bg-gradient-to-br from-primary/30 to-primary/10 overflow-hidden">
-        {vendor.cover_url ? (
-          <img
-            src={vendor.cover_url}
-            alt={`${vendor.name} cover`}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20" />
-        )}
+    <Layout hideGlobalHeader hideFooter>
+      {/* Unified Shopify-style Header */}
+      <VendorStoreHeader
+        vendorId={vendorId}
+        mainCategories={mainCategories}
+        subcategories={subcategories}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedCategory={selectedCategory}
+        onCategorySelect={setSelectedCategory}
+        selectedSubcategory={selectedSubcategory}
+        onSubcategorySelect={setSelectedSubcategory}
+      />
 
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-
-        {/* Share Button */}
-        <Button
-          variant="secondary"
-          size="icon"
-          className="absolute top-4 left-4"
-          onClick={handleShare}
-        >
-          <Share2 className="w-4 h-4" />
-        </Button>
-      </div>
-
-      {/* 2. Container (Holds Content) - Layer 10 */}
-      <div className="relative z-10 container mx-auto px-4">
-
-        {/* 3. Store Header */}
-        <div className="relative -mt-16 mb-8 flex flex-col sm:flex-row items-center sm:items-end gap-4">
-
-          {/* Vendor Logo */}
-          <div className="shrink-0 w-28 h-28 rounded-full bg-background border-4 border-background shadow-lg flex items-center justify-center overflow-hidden z-20">
-            {vendor.logo_url ? (
-              <img
-                src={vendor.logo_url}
-                alt={vendor.name}
-                // التعديل هنا: object-contain بدل object-cover
-                // وضفنا p-1 عشان الصورة تاخد راحتها وماتلزقش في الحواف
-                className="w-full h-full object-contain p-1"
-              />
-            ) : (
-              <Store className="w-12 h-12 text-primary" />
-            )}
-          </div>
-
-          {/* Vendor Info */}
-          <div className="text-center sm:text-right pb-2 flex-1">
-            <h1 className="text-2xl md:text-3xl font-bold">{vendor.name}</h1>
-            {vendor.description && (
-              <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{vendor.description}</p>
-            )}
-            <p className="text-muted-foreground text-sm mt-1">
-              {products.length} منتج متاح
-            </p>
-          </div>
-        </div>
-
-        {/* Store Controls Row */}
-        <div className="mb-8 space-y-4">
-          {/* Search Input */}
-          <div className="relative max-w-md">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder={`ابحث داخل متجر ${vendor.name}...`}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10"
-            />
-          </div>
-
-          {/* Category Filters - Root categories only */}
-          {mainCategories.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={selectedCategory === null ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  setSelectedCategory(null);
-                  setSelectedSubcategory(null);
-                }}
-              >
-                <Package className="w-4 h-4 ml-1" />
-                الكل
-              </Button>
-              {mainCategories.map((category) => (
-                <Button
-                  key={category.id}
-                  variant={selectedCategory === category.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    setSelectedCategory(category.id);
-                    setSelectedSubcategory(null);
-                  }}
-                >
-                  {category.name}
-                </Button>
-              ))}
-            </div>
-          )}
-
-          {/* Subcategory Tabs - shown when parent category is selected */}
-          {selectedCategory && childCategories.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2 pr-4">
-              <span className="text-sm text-muted-foreground self-center">الفئات الفرعية:</span>
-              <Button
-                variant={!selectedSubcategory ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setSelectedSubcategory(null)}
-              >
-                الكل
-              </Button>
-              {childCategories.map((sub) => (
-                <Button
-                  key={sub.id}
-                  variant={selectedSubcategory === sub.id ? "secondary" : "ghost"}
-                  size="sm"
-                  onClick={() => setSelectedSubcategory(sub.id)}
-                >
-                  {sub.name}
-                </Button>
-              ))}
-            </div>
-          )}
-        </div>
+      {/* Main Content Container */}
+      <div className="container mx-auto px-4 py-6">
 
         {/*
-          =============================================
           MARKETING SECTIONS - SINGLE RENDER GATE
-          =============================================
           All sections controlled by ONE condition: !hasFiltersActive
-          Layout order: TOP_AD → BEST_SELLERS → MIDDLE_ADS → RECENTLY_VIEWED
         */}
         {!hasFiltersActive && (
           <div className="marketing-sections">
-            {/* TOP AD - Single banner */}
+            {/* TOP AD */}
             {topAd && (
               <div className="mb-8">
                 <a
@@ -263,19 +93,19 @@ const StorePage = () => {
               </div>
             )}
 
-            {/* BEST SELLERS */}
+            {/* BEST SELLERS - Links to vendor-scoped section */}
             {bestSellers.length > 0 && (
               <div className="mb-8">
                 <ProductCarousel
                   title="Best Sellers"
                   products={bestSellers}
                   loading={bestSellersLoading}
-                  showMoreLink="/section/best-sellers"
+                  showMoreLink={`/store/${vendorSlug}/section/best-sellers`}
                 />
               </div>
             )}
 
-            {/* MIDDLE ADS - Grid of max 2 */}
+            {/* MIDDLE ADS */}
             {middleAds.length > 0 && (
               <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {middleAds.map((ad) => (

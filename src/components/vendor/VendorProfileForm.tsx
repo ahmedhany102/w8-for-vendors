@@ -5,14 +5,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Save, Store, Upload, ImageIcon, X, Link as LinkIcon } from 'lucide-react';
+import { Loader2, Save, Store, Upload, X, Link as LinkIcon } from 'lucide-react';
 import { VendorProfile, getStatusLabel, getStatusColor } from '@/hooks/useVendorProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface VendorProfileFormProps {
   profile: VendorProfile;
-  onUpdate: (updates: Partial<Pick<VendorProfile, 'store_name' | 'store_description' | 'phone' | 'address' | 'logo_url' | 'cover_url'>>) => Promise<boolean>;
+  onUpdate: (updates: Partial<Pick<VendorProfile, 'store_name' | 'store_description' | 'phone' | 'address' | 'logo_url'>>) => Promise<boolean>;
 }
 
 export const VendorProfileForm = ({ profile, onUpdate }: VendorProfileFormProps) => {
@@ -21,39 +21,35 @@ export const VendorProfileForm = ({ profile, onUpdate }: VendorProfileFormProps)
   const [phone, setPhone] = useState(profile.phone || '');
   const [address, setAddress] = useState(profile.address || '');
   const [logoUrl, setLogoUrl] = useState(profile.logo_url || '');
-  const [coverUrl, setCoverUrl] = useState(profile.cover_url || '');
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadingCover, setUploadingCover] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  
+
   const logoInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const changed = 
+    const changed =
       storeName !== profile.store_name ||
       storeDescription !== (profile.store_description || '') ||
       phone !== (profile.phone || '') ||
       address !== (profile.address || '') ||
-      logoUrl !== (profile.logo_url || '') ||
-      coverUrl !== (profile.cover_url || '');
+      logoUrl !== (profile.logo_url || '');
     setHasChanges(changed);
-  }, [storeName, storeDescription, phone, address, logoUrl, coverUrl, profile]);
+  }, [storeName, storeDescription, phone, address, logoUrl, profile]);
 
-  const uploadImage = async (file: File, type: 'logo' | 'cover'): Promise<string | null> => {
+  const uploadImage = async (file: File): Promise<string | null> => {
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${profile.id}_${type}_${Date.now()}.${fileExt}`;
-      const filePath = `vendor-${type}s/${fileName}`;
+      const fileName = `${profile.id}_logo_${Date.now()}.${fileExt}`;
+      const filePath = `vendor-logos/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('vendor-assets')
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) {
-        console.error(`Error uploading ${type}:`, uploadError);
-        toast.error(`فشل في رفع ${type === 'logo' ? 'الشعار' : 'صورة الغلاف'}`);
+        console.error('Error uploading logo:', uploadError);
+        toast.error('فشل في رفع الشعار');
         return null;
       }
 
@@ -63,7 +59,7 @@ export const VendorProfileForm = ({ profile, onUpdate }: VendorProfileFormProps)
 
       return data.publicUrl;
     } catch (error) {
-      console.error(`Error in uploadImage (${type}):`, error);
+      console.error('Error in uploadImage:', error);
       return null;
     }
   };
@@ -83,7 +79,7 @@ export const VendorProfileForm = ({ profile, onUpdate }: VendorProfileFormProps)
     }
 
     setUploadingLogo(true);
-    const url = await uploadImage(file, 'logo');
+    const url = await uploadImage(file);
     if (url) {
       setLogoUrl(url);
       toast.success('تم رفع الشعار بنجاح');
@@ -91,32 +87,9 @@ export const VendorProfileForm = ({ profile, onUpdate }: VendorProfileFormProps)
     setUploadingLogo(false);
   };
 
-  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('يرجى اختيار ملف صورة');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('حجم الملف يجب أن لا يتجاوز 5MB');
-      return;
-    }
-
-    setUploadingCover(true);
-    const url = await uploadImage(file, 'cover');
-    if (url) {
-      setCoverUrl(url);
-      toast.success('تم رفع صورة الغلاف بنجاح');
-    }
-    setUploadingCover(false);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!storeName.trim()) {
       return;
     }
@@ -128,8 +101,7 @@ export const VendorProfileForm = ({ profile, onUpdate }: VendorProfileFormProps)
         store_description: storeDescription.trim() || null,
         phone: phone.trim() || null,
         address: address.trim() || null,
-        logo_url: logoUrl.trim() || null,
-        cover_url: coverUrl.trim() || null
+        logo_url: logoUrl.trim() || null
       });
       if (success) {
         setHasChanges(false);
@@ -176,9 +148,9 @@ export const VendorProfileForm = ({ profile, onUpdate }: VendorProfileFormProps)
             <div className="flex items-center gap-2 text-sm">
               <LinkIcon className="w-4 h-4 text-primary" />
               <span className="text-muted-foreground">رابط متجرك:</span>
-              <a 
-                href={storeUrl} 
-                target="_blank" 
+              <a
+                href={storeUrl}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary font-medium hover:underline"
               >
@@ -189,86 +161,23 @@ export const VendorProfileForm = ({ profile, onUpdate }: VendorProfileFormProps)
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Cover Image Section */}
-          <div className="space-y-2">
-            <Label>صورة الغلاف</Label>
-            <div className="relative w-full h-40 bg-muted rounded-lg overflow-hidden border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors">
-              {coverUrl ? (
-                <>
-                  <img 
-                    src={coverUrl} 
-                    alt="Store cover" 
-                    className="w-full h-full object-cover"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 left-2 w-8 h-8"
-                    onClick={() => setCoverUrl('')}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </>
-              ) : (
-                <div 
-                  className="w-full h-full flex flex-col items-center justify-center cursor-pointer"
-                  onClick={() => coverInputRef.current?.click()}
-                >
-                  {uploadingCover ? (
-                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                  ) : (
-                    <>
-                      <ImageIcon className="w-10 h-10 text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground">اضغط لرفع صورة الغلاف</span>
-                      <span className="text-xs text-muted-foreground mt-1">1920x400 موصى بها</span>
-                    </>
-                  )}
-                </div>
-              )}
-              <input
-                ref={coverInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleCoverUpload}
-                disabled={uploadingCover}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Input
-                type="url"
-                value={coverUrl}
-                onChange={(e) => setCoverUrl(e.target.value)}
-                placeholder="أو أدخل رابط الصورة"
-                className="flex-1"
-              />
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="icon"
-                onClick={() => coverInputRef.current?.click()}
-                disabled={uploadingCover}
-              >
-                {uploadingCover ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              </Button>
-            </div>
-          </div>
-
-          {/* Logo Section */}
+          {/* Logo Section - This is the ONLY branding image */}
           <div className="space-y-2">
             <Label>شعار المتجر</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              سيظهر الشعار في رأس صفحة متجرك (الهيدر)
+            </p>
             <div className="flex items-center gap-4">
-              <div 
-                className="relative w-24 h-24 bg-muted rounded-full overflow-hidden border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors cursor-pointer"
+              <div
+                className="relative w-24 h-24 bg-muted rounded-lg overflow-hidden border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors cursor-pointer"
                 onClick={() => logoInputRef.current?.click()}
               >
                 {logoUrl ? (
                   <>
-                    <img 
-                      src={logoUrl} 
-                      alt="Store logo" 
-                      className="w-full h-full object-cover"
+                    <img
+                      src={logoUrl}
+                      alt="Store logo"
+                      className="w-full h-full object-contain p-2"
                     />
                     <Button
                       type="button"

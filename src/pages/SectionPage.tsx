@@ -3,9 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import ProductCard from '@/components/ProductCard';
 import { useSectionProducts, useBestSellers, useHotDeals, useCategoryProducts } from '@/hooks/useSections';
+import { useVendorContext } from '@/hooks/useVendorContext';
+import { useVendorCategories } from '@/hooks/useVendors';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Package } from 'lucide-react';
+import { ArrowLeft, Package, Star, Flame } from 'lucide-react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -15,23 +17,54 @@ import {
 } from '@/components/ui/breadcrumb';
 import { supabase } from '@/integrations/supabase/client';
 import { Section, SectionProduct } from '@/types/section';
+import VendorStoreHeader from '@/components/vendor/VendorStoreHeader';
+
+// ===========================================
+// VIRTUAL SECTION DEFINITIONS
+// These sections don't exist in the database
+// but are handled by direct product queries
+// ===========================================
+const VIRTUAL_SECTIONS: Record<string, { title: string; type: string }> = {
+  'best-sellers': { title: 'الأكثر مبيعاً', type: 'best_seller' },
+  'best-seller': { title: 'الأكثر مبيعاً', type: 'best_seller' },
+  'hot-deals': { title: 'عروض ساخنة', type: 'hot_deals' },
+  'hot-deal': { title: 'عروض ساخنة', type: 'hot_deals' },
+};
 
 const SectionPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [section, setSection] = React.useState<Section | null>(null);
   const [sectionLoading, setSectionLoading] = React.useState(true);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = React.useState<string | null>(null);
 
-  // Fetch section details by slug or id
+  // Get vendor context
+  const { isVendorContext, vendorId, vendorSlug } = useVendorContext();
+
+  // Only fetch vendor categories when in vendor context
+  const { mainCategories, subcategories } = useVendorCategories(vendorId);
+
+  // Check if this is a virtual section (best-sellers, hot-deals)
+  const virtualSection = id ? VIRTUAL_SECTIONS[id.toLowerCase()] : null;
+  const isVirtualSection = !!virtualSection;
+
+  // Fetch section details by slug or id - SKIP for virtual sections
   React.useEffect(() => {
     const fetchSection = async () => {
+      // Skip DB lookup for virtual sections
+      if (isVirtualSection) {
+        setSectionLoading(false);
+        return;
+      }
+
       if (!id) {
         setSectionLoading(false);
         return;
       }
 
       try {
-        // Check if the route param looks like a UUID
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
         let query = supabase
@@ -39,7 +72,6 @@ const SectionPage = () => {
           .select('*')
           .eq('is_active', true);
 
-        // Query by ID if UUID format, otherwise by slug
         if (isUUID) {
           query = query.eq('id', id);
         } else {
@@ -63,24 +95,38 @@ const SectionPage = () => {
     };
 
     fetchSection();
-  }, [id]);
+  }, [id, isVirtualSection]);
 
-  // ✅ ALL HOOKS CALLED AT TOP LEVEL (React Rules of Hooks compliant)
-  // Each hook runs independently - we select the correct data below
+  // ALL HOOKS - Read from VendorContext
   const { products: manualProducts, loading: manualLoading } = useSectionProducts(section?.id || '', 100);
-  const { products: bestSellers, loading: bsLoading } = useBestSellers(undefined, 100);
-  const { products: hotDeals, loading: hdLoading } = useHotDeals(undefined, 100);
+  const { products: bestSellers, loading: bsLoading } = useBestSellers(100);
+  const { products: hotDeals, loading: hdLoading } = useHotDeals(100);
   const { products: categoryProducts, loading: cpLoading } = useCategoryProducts(
     section?.config?.category_id || '',
-    undefined,
     100
   );
 
-  // ✅ DATA SWITCHING based on section.type (not conditional hooks)
-  const getProductsForType = (): { products: SectionProduct[]; loading: boolean } => {
-    if (!section) return { products: [], loading: true };
+  // Get section type - from virtual section OR database section
+  const getSectionType = (): string => {
+    if (isVirtualSection && virtualSection) {
+      return virtualSection.type;
+    }
+    return section?.type || 'manual';
+  };
 
-    switch (section.type) {
+  // Get section title - from virtual section OR database section
+  const getSectionTitle = (): string => {
+    if (isVirtualSection && virtualSection) {
+      return virtualSection.title;
+    }
+    return section?.title || 'القسم';
+  };
+
+  // DATA SWITCHING based on section type
+  const getProductsForType = (): { products: SectionProduct[]; loading: boolean } => {
+    const sectionType = getSectionType();
+
+    switch (sectionType) {
       case 'best_seller':
         return { products: bestSellers, loading: bsLoading };
       case 'hot_deals':
@@ -89,32 +135,75 @@ const SectionPage = () => {
         return { products: categoryProducts, loading: cpLoading };
       case 'manual':
       default:
+        // For manual sections, we need the section.id
+        if (!section) return { products: [], loading: true };
         return { products: manualProducts, loading: manualLoading };
     }
   };
 
   const { products, loading: productsLoading } = getProductsForType();
-  const loading = sectionLoading || productsLoading;
 
-  // Section not found
-  if (!sectionLoading && !section) {
+  // Loading state: wait for section lookup (unless virtual) OR products
+  const loading = (!isVirtualSection && sectionLoading) || productsLoading;
+
+  // Back navigation based on context
+  const handleBack = () => {
+    if (isVendorContext && vendorSlug) {
+      navigate(`/store/${vendorSlug}`);
+    } else {
+      navigate('/');
+    }
+  };
+
+  // Section not found - only show if NOT virtual AND not in DB
+  if (!sectionLoading && !section && !isVirtualSection) {
     return (
-      <Layout>
+      <Layout hideGlobalHeader={isVendorContext} hideFooter={isVendorContext}>
+        {isVendorContext && vendorId && (
+          <VendorStoreHeader
+            vendorId={vendorId}
+            mainCategories={mainCategories}
+            subcategories={subcategories}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedCategory={selectedCategory}
+            onCategorySelect={setSelectedCategory}
+            selectedSubcategory={selectedSubcategory}
+            onSubcategorySelect={setSelectedSubcategory}
+          />
+        )}
         <div className="container mx-auto px-4 py-12 text-center">
           <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold mb-2">القسم غير موجود</h2>
           <p className="text-muted-foreground mb-6">لم يتم العثور على القسم المطلوب</p>
-          <Button onClick={() => navigate('/')}>
+          <Button onClick={handleBack}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            العودة للرئيسية
+            {isVendorContext ? 'العودة للمتجر' : 'العودة للرئيسية'}
           </Button>
         </div>
       </Layout>
     );
   }
 
+  const sectionTitle = getSectionTitle();
+
   return (
-    <Layout>
+    <Layout hideGlobalHeader={isVendorContext} hideFooter={isVendorContext}>
+      {/* Vendor Header (when in vendor context) */}
+      {isVendorContext && vendorId && (
+        <VendorStoreHeader
+          vendorId={vendorId}
+          mainCategories={mainCategories}
+          subcategories={subcategories}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedCategory={selectedCategory}
+          onCategorySelect={setSelectedCategory}
+          selectedSubcategory={selectedSubcategory}
+          onSubcategorySelect={setSelectedSubcategory}
+        />
+      )}
+
       <div className="container mx-auto px-4 py-6">
         {/* Breadcrumb */}
         <Breadcrumb className="mb-6">
@@ -123,22 +212,22 @@ const SectionPage = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/')}
+                onClick={handleBack}
                 className="p-0 h-auto font-normal text-primary hover:text-primary/80"
               >
-                الرئيسية
+                {isVendorContext ? 'المتجر' : 'الرئيسية'}
               </Button>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>{section?.title || 'القسم'}</BreadcrumbPage>
+              <BreadcrumbPage>{sectionTitle}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
 
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">{section?.title || 'القسم'}</h1>
+          <h1 className="text-3xl font-bold mb-2">{sectionTitle}</h1>
           {!loading && (
             <p className="text-sm text-muted-foreground">
               {products.length} منتج
@@ -160,9 +249,9 @@ const SectionPage = () => {
             <p className="text-muted-foreground mb-6">
               هذا القسم فارغ حالياً
             </p>
-            <Button onClick={() => navigate('/')}>
+            <Button onClick={handleBack}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              العودة للرئيسية
+              {isVendorContext ? 'العودة للمتجر' : 'العودة للرئيسية'}
             </Button>
           </div>
         ) : (

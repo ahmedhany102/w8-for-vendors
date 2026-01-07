@@ -16,6 +16,9 @@ import { Separator } from '@/components/ui/separator';
 import { trackProductView } from '@/hooks/useSections';
 import { useSimilarProducts, useMoreFromVendor } from '@/hooks/useProductRecommendations';
 import RecommendationCarousel from '@/components/sections/RecommendationCarousel';
+import { useVendorContext } from '@/hooks/useVendorContext';
+import { useVendorCategories } from '@/hooks/useVendors';
+import VendorStoreHeader from '@/components/vendor/VendorStoreHeader';
 
 interface Product {
   id: string;
@@ -71,8 +74,17 @@ const ProductDetails = () => {
   });
 
   // Check if user came from a vendor store
-  const isFromVendorStore = location.pathname.includes('/store/') || 
+  const isFromVendorStore = location.pathname.includes('/store/') ||
     (location.state as any)?.fromVendor === true;
+
+  // Get vendor context for vendor-scoped behavior
+  const { isVendorContext, vendorId: contextVendorId, vendorSlug } = useVendorContext();
+
+  // Vendor categories for header (only in vendor context)
+  const { mainCategories, subcategories } = useVendorCategories(contextVendorId);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
 
   // Fetch recommendations
   const { products: similarProducts, loading: similarLoading } = useSimilarProducts(id, 8);
@@ -87,7 +99,7 @@ const ProductDetails = () => {
 
       try {
         setLoading(true);
-        
+
         LoadingFallback.startTimeout('product-details', 5000, () => {
           setLoading(false);
           navigate('/not-found');
@@ -134,10 +146,10 @@ const ProductDetails = () => {
         setVendorId(productData.vendor_id || null);
         setCategoryId(productData.category_id || null);
         setActiveImage(formattedProduct.main_image || formattedProduct.images?.[0] || '/placeholder.svg');
-        
+
         // Track product view for personalization
         trackProductView(id);
-        
+
       } catch (error: any) {
         LoadingFallback.clearTimeout('product-details');
         console.error('Error fetching product:', error);
@@ -146,7 +158,7 @@ const ProductDetails = () => {
         setLoading(false);
       }
     };
-    
+
     fetchProduct();
   }, [id, navigate]);
 
@@ -154,7 +166,7 @@ const ProductDetails = () => {
   useEffect(() => {
     const checkVariants = async () => {
       if (!id) return;
-      
+
       const { data, error } = await supabase
         .from('product_color_variants')
         .select('id')
@@ -179,21 +191,21 @@ const ProductDetails = () => {
   };
 
   // Calculate stock and price
-  const currentPrice = hasVariants 
-    ? variantSelection.price 
+  const currentPrice = hasVariants
+    ? variantSelection.price
     : (product?.price || 0);
-  
-  const currentStock = hasVariants 
-    ? variantSelection.stock 
+
+  const currentStock = hasVariants
+    ? variantSelection.stock
     : (product?.stock || product?.inventory || 0);
-  
+
   const isOutOfStock = currentStock <= 0;
   const hasDiscount = product?.discount && product.discount > 0;
-  const discountedPrice = hasDiscount 
-    ? currentPrice - (currentPrice * (product!.discount! / 100)) 
+  const discountedPrice = hasDiscount
+    ? currentPrice - (currentPrice * (product!.discount! / 100))
     : currentPrice;
 
-  const canAddToCart = hasVariants 
+  const canAddToCart = hasVariants
     ? (variantSelection.colorVariantId && variantSelection.size && currentStock > 0)
     : (currentStock > 0);
 
@@ -214,7 +226,7 @@ const ProductDetails = () => {
 
     try {
       setAddingToCart(true);
-      
+
       const productForCart = {
         id: product.id,
         name: product.name,
@@ -231,11 +243,11 @@ const ProductDetails = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      
+
       const cartSize = variantSelection.size || 'متاح';
       const cartColor = variantSelection.color || '';
       const success = await addToCart(productForCart, cartSize, cartColor, quantity, discountedPrice);
-      
+
       if (success) {
         toast.success('تمت الإضافة إلى العربة');
       }
@@ -260,7 +272,20 @@ const ProductDetails = () => {
 
   if (loading) {
     return (
-      <Layout>
+      <Layout hideGlobalHeader={isVendorContext} hideFooter={isVendorContext}>
+        {isVendorContext && contextVendorId && (
+          <VendorStoreHeader
+            vendorId={contextVendorId}
+            mainCategories={mainCategories}
+            subcategories={subcategories}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedCategory={selectedCategory}
+            onCategorySelect={setSelectedCategory}
+            selectedSubcategory={selectedSubcategory}
+            onSubcategorySelect={setSelectedSubcategory}
+          />
+        )}
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
@@ -288,17 +313,47 @@ const ProductDetails = () => {
 
   if (!product) {
     return (
-      <Layout>
+      <Layout hideGlobalHeader={isVendorContext} hideFooter={isVendorContext}>
+        {isVendorContext && contextVendorId && (
+          <VendorStoreHeader
+            vendorId={contextVendorId}
+            mainCategories={mainCategories}
+            subcategories={subcategories}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedCategory={selectedCategory}
+            onCategorySelect={setSelectedCategory}
+            selectedSubcategory={selectedSubcategory}
+            onSubcategorySelect={setSelectedSubcategory}
+          />
+        )}
         <div className="text-center py-20">
           <h2 className="text-2xl font-bold mb-4">المنتج غير موجود</h2>
-          <Button onClick={() => navigate('/')}>العودة للرئيسية</Button>
+          <Button onClick={() => isVendorContext && vendorSlug ? navigate(`/store/${vendorSlug}`) : navigate('/')}>
+            {isVendorContext ? 'العودة للمتجر' : 'العودة للرئيسية'}
+          </Button>
         </div>
       </Layout>
     );
   }
 
+
   return (
-    <Layout>
+    <Layout hideGlobalHeader={isVendorContext} hideFooter={isVendorContext}>
+      {/* Vendor Header (when in vendor context) */}
+      {isVendorContext && contextVendorId && (
+        <VendorStoreHeader
+          vendorId={contextVendorId}
+          mainCategories={mainCategories}
+          subcategories={subcategories}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedCategory={selectedCategory}
+          onCategorySelect={setSelectedCategory}
+          selectedSubcategory={selectedSubcategory}
+          onSubcategorySelect={setSelectedSubcategory}
+        />
+      )}
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Product Images */}
@@ -321,9 +376,8 @@ const ProductDetails = () => {
                 {product.images.map((image, index) => (
                   <div
                     key={index}
-                    className={`border rounded cursor-pointer flex-shrink-0 w-16 h-16 overflow-hidden ${
-                      activeImage === image ? 'ring-2 ring-primary' : ''
-                    }`}
+                    className={`border rounded cursor-pointer flex-shrink-0 w-16 h-16 overflow-hidden ${activeImage === image ? 'ring-2 ring-primary' : ''
+                      }`}
                     onClick={() => handleImageClick(image)}
                   >
                     <img
@@ -473,7 +527,7 @@ const ProductDetails = () => {
         {/* Recommendations Section */}
         <div className="mt-12">
           <Separator className="mb-8" />
-          
+
           {/* Similar Products */}
           {similarProducts.length > 0 && (
             <RecommendationCarousel
@@ -484,7 +538,7 @@ const ProductDetails = () => {
               showMoreLink={isFromVendorStore || !categoryId ? undefined : `/recommendations/similar?category_id=${categoryId}&exclude=${id}`}
             />
           )}
-          
+
           {/* More From This Store */}
           {moreFromVendor.length > 0 && vendorId && (
             <>

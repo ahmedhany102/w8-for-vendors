@@ -31,8 +31,14 @@ const Login = () => {
   // Redirect if already logged in
   React.useEffect(() => {
     if (user && !authLoading) {
-      console.log('User already logged in, redirecting to home');
-      navigate("/");
+      console.log('User already logged in, checking for redirect target');
+      const redirectTarget = sessionStorage.getItem('redirectAfterLogin');
+      if (redirectTarget) {
+        sessionStorage.removeItem('redirectAfterLogin');
+        navigate(redirectTarget);
+      } else {
+        navigate("/");
+      }
     }
   }, [user, authLoading, navigate]);
 
@@ -46,15 +52,23 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     if (isSubmitting) return;
-    
+
     setIsSubmitting(true);
     try {
       console.log("Attempting login for:", data.email);
-      
+
       const success = await login(data.email, data.password);
       if (success) {
-        console.log("Login successful, navigating to home");
-        navigate("/");
+        // Check for saved redirect target (e.g., vendor checkout)
+        const redirectTarget = sessionStorage.getItem('redirectAfterLogin');
+        if (redirectTarget) {
+          console.log("Login successful, redirecting to:", redirectTarget);
+          sessionStorage.removeItem('redirectAfterLogin');
+          navigate(redirectTarget);
+        } else {
+          console.log("Login successful, navigating to home");
+          navigate("/");
+        }
       }
     } catch (error) {
       console.error('Login submission error:', error);
@@ -97,7 +111,7 @@ const Login = () => {
                     <FormItem>
                       <FormLabel className="text-gray-700 dark:text-gray-300">Email</FormLabel>
                       <FormControl>
-                        <Input 
+                        <Input
                           id="email"
                           name="email"
                           type="email"
@@ -119,11 +133,11 @@ const Login = () => {
                     <FormItem>
                       <FormLabel className="text-gray-700 dark:text-gray-300">Password</FormLabel>
                       <FormControl>
-                        <Input 
+                        <Input
                           id="password"
                           name="password"
                           type="password"
-                          placeholder="••••••••" 
+                          placeholder="••••••••"
                           {...field}
                           autoComplete="current-password"
                           disabled={isSubmitting}
@@ -134,8 +148,8 @@ const Login = () => {
                     </FormItem>
                   )}
                 />
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full bg-green-800 hover:bg-green-900"
                   disabled={isSubmitting}
                 >

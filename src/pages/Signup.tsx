@@ -56,7 +56,14 @@ const Signup = () => {
 
   React.useEffect(() => {
     if (user && !authLoading) {
-      navigate("/");
+      // Check for saved redirect target
+      const redirectTarget = sessionStorage.getItem('redirectAfterLogin');
+      if (redirectTarget) {
+        sessionStorage.removeItem('redirectAfterLogin');
+        navigate(redirectTarget);
+      } else {
+        navigate("/");
+      }
     }
   }, [user, authLoading, navigate]);
 
@@ -72,7 +79,7 @@ const Signup = () => {
 
   const onSubmit = async (data: SignupFormValues) => {
     if (isSubmitting) return;
-    
+
     setIsSubmitting(true);
     try {
       const success = await signup(data.email, data.password, data.name);
@@ -126,7 +133,7 @@ const Signup = () => {
                   If email confirmation is enabled, please check your email before logging in.
                 </p>
               </div>
-              <Button 
+              <Button
                 onClick={() => navigate("/login")}
                 className="w-full bg-green-800 hover:bg-green-900"
               >

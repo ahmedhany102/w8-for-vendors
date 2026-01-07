@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, ShoppingCart, User, Package, Truck, Heart, Store } from 'lucide-react';
+import { Home, ShoppingCart, User, Package, Heart, Store } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import CartDatabase from "@/models/CartDatabase";
 
@@ -10,20 +10,83 @@ const BottomNavigation: React.FC = () => {
   const { user, isVendor } = useAuth();
   const [cartItemCount, setCartItemCount] = useState(0);
 
-  // Check if we're on admin or vendor pages
+  // ===========================================
+  // VENDOR CONTEXT DETECTION FROM URL PATH
+  // ===========================================
+  // BottomNavigation is rendered OUTSIDE VendorContextProvider in App.tsx
+  // So we detect vendor context by parsing the URL path directly
+  const vendorContext = useMemo(() => {
+    const match = location.pathname.match(/^\/store\/([^/]+)/);
+    if (match) {
+      return {
+        isVendorContext: true,
+        vendorSlug: match[1]
+      };
+    }
+    return {
+      isVendorContext: false,
+      vendorSlug: null
+    };
+  }, [location.pathname]);
+
+  const { isVendorContext, vendorSlug } = vendorContext;
+
+  // Check if we're on admin or vendor dashboard pages
   const isOnAdminPages = location.pathname.startsWith('/admin');
-  const isOnVendorPages = location.pathname.startsWith('/vendor');
+  const isOnVendorDashboard = location.pathname.startsWith('/vendor');
+
+  // ===========================================
+  // DYNAMIC NAVIGATION TARGETS
+  // ===========================================
+  // When in vendor context, ALL navigation stays vendor-scoped
+  const homeLink = isVendorContext && vendorSlug
+    ? `/store/${vendorSlug}`
+    : '/';
+
+  const cartLink = isVendorContext && vendorSlug
+    ? `/store/${vendorSlug}/cart`
+    : '/cart';
+
+  const profileLink = isVendorContext && vendorSlug
+    ? `/store/${vendorSlug}/profile`
+    : '/profile';
+
+  const ordersLink = isVendorContext && vendorSlug
+    ? `/store/${vendorSlug}/orders`
+    : '/orders';
+
+  const favoritesLink = isVendorContext && vendorSlug
+    ? `/store/${vendorSlug}/favorites`
+    : '/favorites';
+
+  // Check active states
+  const isHomeActive = isVendorContext && vendorSlug
+    ? location.pathname === `/store/${vendorSlug}` || location.pathname === `/store/${vendorSlug}/`
+    : location.pathname === '/';
+
+  const isCartActive = isVendorContext && vendorSlug
+    ? location.pathname === `/store/${vendorSlug}/cart`
+    : location.pathname === '/cart';
+
+  const isProfileActive = isVendorContext && vendorSlug
+    ? location.pathname === `/store/${vendorSlug}/profile`
+    : location.pathname === '/profile';
+
+  const isOrdersActive = isVendorContext && vendorSlug
+    ? location.pathname === `/store/${vendorSlug}/orders`
+    : location.pathname.includes('/orders');
+
+  const isFavoritesActive = isVendorContext && vendorSlug
+    ? location.pathname === `/store/${vendorSlug}/favorites`
+    : location.pathname === '/favorites';
 
   // Update cart count
   useEffect(() => {
-    console.log("BottomNavigation mounted");
-    
     const updateCartCount = async () => {
       try {
         const cartDb = await CartDatabase.getInstance();
         const cartItems = await cartDb.getCartItems();
         setCartItemCount(cartItems.length);
-        console.log("Cart items updated:", cartItems.length);
       } catch (error) {
         console.error("Error updating cart count:", error);
       }
@@ -38,30 +101,29 @@ const BottomNavigation: React.FC = () => {
     };
   }, []);
 
-  // Don't show bottom navigation on admin or vendor pages
-  if (isOnAdminPages || isOnVendorPages) {
-    console.log("On admin/vendor page - hiding bottom navigation");
+  // Don't show bottom navigation on admin or vendor dashboard pages
+  if (isOnAdminPages || isOnVendorDashboard) {
     return null;
   }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-lg z-50">
       <div className="flex justify-between items-center">
-        <Link 
-          to="/" 
-          className={`flex flex-1 flex-col items-center py-3 ${
-            location.pathname === '/' ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground'
-          }`}
+        {/* Home - vendor-scoped when in vendor context */}
+        <Link
+          to={homeLink}
+          className={`flex flex-1 flex-col items-center py-3 ${isHomeActive ? 'text-primary' : 'text-muted-foreground'
+            }`}
         >
           <Home className="w-5 h-5" />
-          <span className="text-xs">الرئيسية</span>
+          <span className="text-xs">{isVendorContext ? 'المتجر' : 'الرئيسية'}</span>
         </Link>
-        
-        <Link 
-          to="/cart" 
-          className={`flex flex-1 flex-col items-center py-3 relative ${
-            location.pathname === '/cart' ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground'
-          }`}
+
+        {/* Cart - vendor-scoped when in vendor context */}
+        <Link
+          to={cartLink}
+          className={`flex flex-1 flex-col items-center py-3 relative ${isCartActive ? 'text-primary' : 'text-muted-foreground'
+            }`}
         >
           <ShoppingCart className="w-5 h-5" />
           {cartItemCount > 0 && (
@@ -71,47 +133,46 @@ const BottomNavigation: React.FC = () => {
           )}
           <span className="text-xs">العربة</span>
         </Link>
-        
+
+        {/* Favorites - vendor-scoped when in vendor context */}
         {user && (
-          <Link 
-            to="/favorites" 
-            className={`flex flex-1 flex-col items-center py-3 ${
-              location.pathname === '/favorites' ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground'
-            }`}
+          <Link
+            to={favoritesLink}
+            className={`flex flex-1 flex-col items-center py-3 ${isFavoritesActive ? 'text-primary' : 'text-muted-foreground'
+              }`}
           >
             <Heart className="w-5 h-5" />
             <span className="text-xs">المفضلة</span>
           </Link>
         )}
-        
-        {/* Show vendor link for vendor users */}
+
+        {/* Show vendor dashboard link for vendor users */}
         {isVendor && (
-          <Link 
-            to="/vendor" 
-            className={`flex flex-1 flex-col items-center py-3 ${
-              location.pathname.startsWith('/vendor') ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground'
-            }`}
+          <Link
+            to="/vendor"
+            className={`flex flex-1 flex-col items-center py-3 ${location.pathname.startsWith('/vendor') ? 'text-primary' : 'text-muted-foreground'
+              }`}
           >
             <Store className="w-5 h-5" />
             <span className="text-xs">متجري</span>
           </Link>
         )}
-        
-        <Link 
-          to="/profile"
-          className={`flex flex-1 flex-col items-center py-3 ${
-            location.pathname === '/profile' ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground'
-          }`}
+
+        {/* Account - vendor-scoped when in vendor context */}
+        <Link
+          to={profileLink}
+          className={`flex flex-1 flex-col items-center py-3 ${isProfileActive ? 'text-primary' : 'text-muted-foreground'
+            }`}
         >
           <User className="w-5 h-5" />
           <span className="text-xs">حسابي</span>
         </Link>
-        
-        <Link 
-          to="/orders" 
-          className={`flex flex-1 flex-col items-center py-3 ${
-            location.pathname.includes('/orders') ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground'
-          }`}
+
+        {/* Orders - vendor-scoped when in vendor context */}
+        <Link
+          to={ordersLink}
+          className={`flex flex-1 flex-col items-center py-3 ${isOrdersActive ? 'text-primary' : 'text-muted-foreground'
+            }`}
         >
           <Package className="w-5 h-5" />
           <span className="text-xs">طلباتي</span>

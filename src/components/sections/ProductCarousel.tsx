@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { SectionProduct } from '@/types/section';
 import { toast } from 'sonner';
 import CartDatabase from '@/models/CartDatabase';
+import { useVendorContext } from '@/hooks/useVendorContext';
 
 interface ProductCarouselProps {
   title: string;
@@ -31,6 +32,9 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  // Get vendor context for vendor-scoped navigation
+  const { isVendorContext, vendorSlug } = useVendorContext();
+
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
       const scrollAmount = 300;
@@ -42,7 +46,12 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
   };
 
   const handleProductClick = (productId: string) => {
-    navigate(`/product/${productId}`);
+    // Use vendor-scoped URL when in vendor context
+    if (isVendorContext && vendorSlug) {
+      navigate(`/store/${vendorSlug}/product/${productId}`);
+    } else {
+      navigate(`/product/${productId}`);
+    }
   };
 
   const handleVendorClick = (e: React.MouseEvent, slug: string | null) => {
@@ -59,7 +68,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
       const productForCart = {
         id: product.id,
         name: product.name,
-        price: product.discount 
+        price: product.discount
           ? product.price - (product.price * product.discount / 100)
           : product.price,
         mainImage: product.image_url,
@@ -102,7 +111,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
         badge: 'bg-primary text-primary-foreground'
       };
     }
-    
+
     switch (variant) {
       case 'hot_deals':
         return {
@@ -132,7 +141,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 
   return (
     <div className="mb-8">
-      <div 
+      <div
         className={`flex items-center justify-between mb-4 p-3 rounded-lg ${styles.headerBg}`}
         style={styles.headerStyle}
       >
@@ -276,7 +285,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                   </button>
                 )}
               </CardContent>
-              
+
               <CardFooter className="p-3 pt-0">
                 <Button
                   onClick={(e) => handleAddToCart(e, product)}

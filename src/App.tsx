@@ -21,11 +21,12 @@ import Favorites from './pages/Favorites';
 import VendorDashboard from './pages/vendor/VendorDashboard';
 import BecomeVendor from './pages/BecomeVendor';
 import Vendors from './pages/Vendors';
-import StorePage from './pages/StorePage';
-import BestSellers from './pages/BestSellers';
-import HotDeals from './pages/HotDeals';
 import SectionPage from './pages/SectionPage';
 import SimilarProductsPage from './pages/SimilarProductsPage';
+
+// Vendor context and layout
+import { VendorContextProvider } from './contexts/VendorContext';
+import VendorLayout from './components/layouts/VendorLayout';
 
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from 'sonner';
@@ -53,55 +54,63 @@ function App() {
         <AuthProvider>
           <div className="flex flex-col min-h-screen w-full">
             <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/admin-login" element={<AdminLogin />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/category/:slug" element={<CategoryPage />} />
-                <Route path="/product/:id" element={<ProductDetails />} />
-                <Route path="/vendors" element={<Vendors />} />
-                <Route path="/store/:vendorSlug" element={<StorePage />} />
-                <Route path="/best-sellers" element={<BestSellers />} />
-                <Route path="/hot-deals" element={<HotDeals />} />
-                <Route path="/section/:id" element={<SectionPage />} />
-                <Route path="/recommendations/similar" element={<SimilarProductsPage />} />
+              {/* Global (W8 Mall) Routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/admin-login" element={<AdminLogin />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/category/:slug" element={<CategoryPage />} />
+              <Route path="/product/:id" element={<ProductDetails />} />
+              <Route path="/vendors" element={<Vendors />} />
+              <Route path="/section/:id" element={<SectionPage />} />
+              <Route path="/recommendations/similar" element={<SimilarProductsPage />} />
 
-                {/* Protected routes */}
-                <Route element={<RequireAuth adminOnly={false} />}>
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/order-tracking" element={<OrderTracking />} />
-                  <Route path="/orders" element={<OrderTracking />} />
-                  <Route path="/favorites" element={<Favorites />} />
-                  <Route path="/become-vendor" element={<BecomeVendor />} />
-                </Route>
+              {/* Vendor Storefront Routes - Wrapped in VendorContextProvider */}
+              <Route
+                path="/store/:vendorSlug/*"
+                element={
+                  <VendorContextProvider>
+                    <VendorLayout />
+                  </VendorContextProvider>
+                }
+              />
 
-                {/* Vendor routes */}
-                <Route element={<RequireVendorAuth />}>
-                  <Route path="/vendor" element={<VendorDashboard />} />
-                  <Route path="/vendor/products" element={<VendorDashboard />} />
-                  <Route path="/vendor/orders" element={<VendorDashboard />} />
-                  <Route path="/vendor/analytics" element={<VendorDashboard />} />
-                  <Route path="/vendor/settings" element={<VendorDashboard />} />
-                </Route>
+              {/* Protected routes */}
+              <Route element={<RequireAuth adminOnly={false} />}>
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/order-tracking" element={<OrderTracking />} />
+                <Route path="/orders" element={<OrderTracking />} />
+                <Route path="/favorites" element={<Favorites />} />
+                <Route path="/become-vendor" element={<BecomeVendor />} />
+              </Route>
 
-                {/* Admin routes */}
-                <Route element={<RequireAuth adminOnly={true} />}>
-                  <Route path="/admin" element={<Admin />} />
-                  <Route path="/admin/products" element={<Admin activeTab="products" />} />
-                  <Route path="/admin/orders" element={<Admin activeTab="orders" />} />
-                  <Route path="/admin/users" element={<Admin activeTab="users" />} />
-                  <Route path="/admin/coupons" element={<Admin activeTab="coupons" />} />
-                  <Route path="/admin/contact" element={<Admin activeTab="contact" />} />
-                  <Route path="/admin/ads" element={<Admin activeTab="ads" />} />
-                  <Route path="/admin/vendors" element={<Admin activeTab="vendors" />} />
-                </Route>
+              {/* Vendor routes */}
+              <Route element={<RequireVendorAuth />}>
+                <Route path="/vendor" element={<VendorDashboard />} />
+                <Route path="/vendor/products" element={<VendorDashboard />} />
+                <Route path="/vendor/orders" element={<VendorDashboard />} />
+                <Route path="/vendor/analytics" element={<VendorDashboard />} />
+                <Route path="/vendor/settings" element={<VendorDashboard />} />
+              </Route>
 
-                {/* 404 */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              {/* Admin routes */}
+              <Route element={<RequireAuth adminOnly={true} />}>
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/admin/products" element={<Admin activeTab="products" />} />
+                <Route path="/admin/orders" element={<Admin activeTab="orders" />} />
+                <Route path="/admin/users" element={<Admin activeTab="users" />} />
+                <Route path="/admin/coupons" element={<Admin activeTab="coupons" />} />
+                <Route path="/admin/contact" element={<Admin activeTab="contact" />} />
+                <Route path="/admin/ads" element={<Admin activeTab="ads" />} />
+                <Route path="/admin/vendors" element={<Admin activeTab="vendors" />} />
+              </Route>
+
+              {/* 404 */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </div>
           <BottomNavigation />
           <SonnerToaster position="top-right" richColors closeButton />

@@ -8,6 +8,7 @@ import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { ChevronLeft, ChevronRight, ShoppingCart, Store, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import CartDatabase from '@/models/CartDatabase';
+import { useVendorContext } from '@/hooks/useVendorContext';
 
 interface RecommendationCarouselProps {
   title: string;
@@ -31,6 +32,9 @@ const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
   const navigate = useNavigate();
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
+  // Get vendor context for vendor-scoped navigation
+  const { isVendorContext, vendorSlug } = useVendorContext();
+
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
       const scrollAmount = 300;
@@ -42,7 +46,12 @@ const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
   };
 
   const handleProductClick = (productId: string) => {
-    navigate(`/product/${productId}`);
+    // Use vendor-scoped URL when in vendor context
+    if (isVendorContext && vendorSlug) {
+      navigate(`/store/${vendorSlug}/product/${productId}`);
+    } else {
+      navigate(`/product/${productId}`);
+    }
   };
 
   const handleVendorClick = (e: React.MouseEvent, slug: string | null) => {
@@ -59,7 +68,7 @@ const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
       await cartDb.addToCart({
         id: product.id,
         name: product.name,
-        price: product.discount && product.discount > 0 
+        price: product.discount && product.discount > 0
           ? product.price - (product.price * product.discount / 100)
           : product.price,
         mainImage: product.image_url,
@@ -161,13 +170,13 @@ const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
                     }}
                   />
                 </AspectRatio>
-                
+
                 {product.discount && product.discount > 0 && (
                   <div className="absolute top-2 right-2 bg-destructive text-white px-2 py-1 rounded-full text-xs font-bold">
                     -{product.discount}%
                   </div>
                 )}
-                
+
                 {isOutOfStock && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-t-lg">
                     <span className="text-white font-bold">غير متوفر</span>
@@ -179,7 +188,7 @@ const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
                 <h4 className="font-medium text-sm line-clamp-2 mb-1 group-hover:text-primary transition-colors">
                   {product.name}
                 </h4>
-                
+
                 {product.vendor_name && product.vendor_slug && (
                   <button
                     onClick={(e) => handleVendorClick(e, product.vendor_slug)}
@@ -189,7 +198,7 @@ const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
                     <span>{product.vendor_name}</span>
                   </button>
                 )}
-                
+
                 <div className="flex items-center gap-2">
                   <span className="text-primary font-bold">{discountedPrice.toFixed(0)} ج.م</span>
                   {product.discount && product.discount > 0 && (

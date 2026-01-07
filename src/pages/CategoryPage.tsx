@@ -5,6 +5,8 @@ import ProductGrid from '@/components/ProductGrid';
 import SearchBar from '@/components/SearchBar';
 import { useSupabaseProducts } from '@/hooks/useSupabaseProducts';
 import { useCategories } from '@/hooks/useCategories';
+import { useVendorCategories } from '@/hooks/useVendors';
+import { useVendorContext } from '@/hooks/useVendorContext';
 import { useCartIntegration } from '@/hooks/useCartIntegration';
 import { useProductFiltering } from '@/hooks/useProductFiltering';
 import ShoppingCartDialog from '@/components/ShoppingCartDialog';
@@ -12,19 +14,34 @@ import ProductCatalogHeader from '@/components/ProductCatalogHeader';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Package } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { toast } from 'sonner';
+import VendorStoreHeader from '@/components/vendor/VendorStoreHeader';
 
 const CategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { products, loading: productsLoading } = useSupabaseProducts();
+  const { products: allProducts, loading: productsLoading } = useSupabaseProducts();
   const { categories, subcategories: getSubcategories, loading: categoriesLoading } = useCategories();
   const { cartItems, addToCart: addToCartDB, removeFromCart, updateQuantity, clearCart } = useCartIntegration();
   const [showCartDialog, setShowCartDialog] = useState(false);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  const [vendorSearchQuery, setVendorSearchQuery] = useState('');
+  const [vendorSelectedCategory, setVendorSelectedCategory] = useState<string | null>(null);
+  const [vendorSelectedSubcategory, setVendorSelectedSubcategory] = useState<string | null>(null);
 
-  // Find the current category
-  const category = categories.find(cat => cat.slug === slug);
+  // Get vendor context - NO MANUAL DETECTION
+  const { isVendorContext, vendorId, vendorSlug } = useVendorContext();
+
+  // Only fetch vendor categories when in vendor context
+  const { mainCategories, subcategories: vendorSubcategories } = useVendorCategories(vendorId);
+
+  // Filter products by vendor if in vendor context
+  const products = useMemo(() => {
+    if (!isVendorContext || !vendorId) return allProducts;
+    return allProducts.filter(p => p.vendor_id === vendorId);
+  }, [allProducts, isVendorContext, vendorId]);
+
+  // Find the current category by slug OR id (hamburger menu passes id, direct URL uses slug)
+  const category = categories.find(cat => cat.slug === slug || cat.id === slug);
 
   // Get subcategories for current category (if it's a parent)
   const childCategories = useMemo(() => {
@@ -74,7 +91,6 @@ const CategoryPage = () => {
   }));
 
   const handleAddToCart = async (product: any, size: string, quantity?: number) => {
-    // لو المنتج فيه ألوان ومتغيرات، اختار أول لون تلقائيًا للتجربة
     const defaultColor =
       product.variants && product.variants.length > 0
         ? product.variants[0].color
@@ -102,17 +118,39 @@ const CategoryPage = () => {
     navigate('/cart');
   };
 
+  // Back navigation based on context
+  const handleBack = () => {
+    if (isVendorContext && vendorSlug) {
+      navigate(`/store/${vendorSlug}`);
+    } else {
+      navigate('/');
+    }
+  };
+
   // Show 404 if category not found and not loading
   if (!categoriesLoading && !category && slug !== 'all') {
     return (
-      <Layout>
+      <Layout hideGlobalHeader={isVendorContext}>
+        {isVendorContext && vendorId && (
+          <VendorStoreHeader
+            vendorId={vendorId}
+            mainCategories={mainCategories}
+            subcategories={vendorSubcategories}
+            searchQuery={vendorSearchQuery}
+            onSearchChange={setVendorSearchQuery}
+            selectedCategory={vendorSelectedCategory}
+            onCategorySelect={setVendorSelectedCategory}
+            selectedSubcategory={vendorSelectedSubcategory}
+            onSubcategorySelect={setVendorSelectedSubcategory}
+          />
+        )}
         <div className="container mx-auto px-4 py-8 text-center">
           <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
           <h1 className="text-2xl font-bold mb-2">الفئة غير موجودة</h1>
           <p className="text-gray-600 mb-6">الفئة التي تبحث عنها غير متوفرة</p>
-          <Button onClick={() => navigate('/')} className="gap-2">
+          <Button onClick={handleBack} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            العودة للرئيسية
+            {isVendorContext ? 'العودة للمتجر' : 'العودة للرئيسية'}
           </Button>
         </div>
       </Layout>
@@ -123,7 +161,22 @@ const CategoryPage = () => {
   const pageTitle = category ? category.name : 'جميع المنتجات';
 
   return (
-    <Layout>
+    <Layout hideGlobalHeader={isVendorContext} hideFooter={isVendorContext}>
+      {/* Vendor Header (when in vendor context) */}
+      {isVendorContext && vendorId && (
+        <VendorStoreHeader
+          vendorId={vendorId}
+          mainCategories={mainCategories}
+          subcategories={vendorSubcategories}
+          searchQuery={vendorSearchQuery}
+          onSearchChange={setVendorSearchQuery}
+          selectedCategory={vendorSelectedCategory}
+          onCategorySelect={setVendorSelectedCategory}
+          selectedSubcategory={vendorSelectedSubcategory}
+          onSubcategorySelect={setVendorSelectedSubcategory}
+        />
+      )}
+
       <div className="container mx-auto px-4 py-6">
         {/* Breadcrumb */}
         <Breadcrumb className="mb-6">
@@ -132,10 +185,10 @@ const CategoryPage = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/')}
+                onClick={handleBack}
                 className="p-0 h-auto font-normal text-primary hover:text-primary/80"
               >
-                الرئيسية
+                {isVendorContext ? 'المتجر' : 'الرئيسية'}
               </Button>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
