@@ -22,12 +22,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const isInitialized = useRef(false);
   const lastFocusCheck = useRef<number>(0);
-  
-  // Ref to store pending auth state change resolvers
-  const authStateResolvers = useRef<{
-    resolve: (user: AuthUser | null) => void;
-    reject: (error: Error) => void;
-  } | null>(null);
 
   // هنا بنستخدم setLoading من الـ hook عشان نتحكم في حالة التحميل المركزية
   const { validateSessionAndUser, loading, setLoading } = useAuthValidation();
@@ -93,69 +87,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null);
           setSession(null);
           setLoading(false);
-          // Resolve any pending logout promise
-          if (authStateResolvers.current) {
-            authStateResolvers.current.resolve(null);
-            authStateResolvers.current = null;
-          }
           return;
         }
 
-        // --- حالة الدخول (الحل هنا) ---
-        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && newSession?.user) {
-          console.log('🔐 User signed in, fetching FULL profile...');
-
-          // 1. نحدث السيشن فوراً
+        // --- حالة الدخول ---
+        // Note: For login, we handle state updates imperatively in the login function
+        // This listener is mainly for token refresh and initial load scenarios
+        if (event === 'TOKEN_REFRESHED' && newSession?.user) {
+          console.log('🔄 Token refreshed, updating session...');
           setSession(newSession);
-
-          // 2. نخلي اللودينج شغال عشان الراوتر يستنى
-          setLoading(true);
-
+          
+          // Refresh user profile on token refresh
           try {
-            // 3. نتأكد إن الحساب مش محظور الأول
-            const { data: canAuth } = await supabase.rpc('can_user_authenticate', {
-              _user_id: newSession.user.id
-            });
-
-            if (canAuth === false) {
-              console.warn('🚫 Banned user detected');
-              await supabase.auth.signOut();
-              setUser(null);
-              setSession(null);
-              toast.error('تم حظر حسابك. تم تسجيل الخروج تلقائياً');
-              // Reject pending promise for banned user
-              if (authStateResolvers.current) {
-                authStateResolvers.current.reject(new Error('User is banned'));
-                authStateResolvers.current = null;
-              }
-              return;
-            }
-
-            // 4. نجيب البيانات الحقيقية من الداتابيز (بما فيها الـ Role الصح)
             const userData = await fetchUserProfile(newSession.user.id, newSession.user.email!);
-
-            // 5. نحدث اليوزر بالبيانات السليمة
             setUser(userData);
-            console.log('✅ Profile loaded successfully:', userData.role);
-            
-            // Resolve pending login promise with user data
-            if (authStateResolvers.current) {
-              authStateResolvers.current.resolve(userData);
-              authStateResolvers.current = null;
-            }
-
+            console.log('✅ Profile refreshed successfully:', userData.role);
           } catch (err) {
-            console.error('❌ Error fetching profile on login:', err);
-            // Fallback safety
-            setUser(null);
-            // Reject pending promise on error
-            if (authStateResolvers.current) {
-              authStateResolvers.current.reject(err instanceof Error ? err : new Error('Failed to fetch profile'));
-              authStateResolvers.current = null;
-            }
-          } finally {
-            // 6. دلوقتي بس نقول للتطبيق "خلاص حملنا"
-            setLoading(false);
+            console.warn('⚠️ Could not refresh profile on token refresh:', err);
           }
         } else if (event === 'USER_UPDATED') {
           setSession(newSession);
@@ -180,123 +128,126 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []); // Remove dependencies to run once
 
-  // Wrapper login function that waits for auth state to be fully updated
+  // Imperative login function that manually fetches and updates state after successful auth
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    setLoading(true);
     
-    // Create a promise that will be resolved when onAuthStateChange completes
-    const authStatePromise = new Promise<AuthUser | null>((resolve, reject) => {
-      authStateResolvers.current = { resolve, reject };
-    });
-
-    // Create timeout promise with cleanup
-    const timeoutPromise = new Promise<null>((_, reject) => {
-      timeoutId = setTimeout(() => {
-        reject(new Error('Auth state update timeout'));
-      }, 15000);
-    });
-
     try {
+      // 1. Attempt Supabase login
       const success = await baseLogin(email, password);
       if (!success) {
-        // Clear the resolver if login failed at Supabase level
-        authStateResolvers.current = null;
-        if (timeoutId) clearTimeout(timeoutId);
+        setLoading(false);
         return false;
       }
 
-      // Wait for the auth state change to complete (profile fetch, etc.)
-      const userData = await Promise.race([authStatePromise, timeoutPromise]);
+      // 2. Immediately fetch session manually (don't wait for onAuthStateChange)
+      console.log('🔐 Login successful, fetching session manually...');
+      const { data: { session: newSession }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !newSession || !newSession.user) {
+        console.error('❌ Failed to get session after login:', sessionError);
+        setLoading(false);
+        return false;
+      }
 
-      // Clean up timeout
-      if (timeoutId) clearTimeout(timeoutId);
+      // 3. Check if user is banned
+      const { data: canAuth } = await supabase.rpc('can_user_authenticate', {
+        _user_id: newSession.user.id
+      });
 
-      return userData !== null;
+      if (canAuth === false) {
+        console.warn('🚫 Banned user detected');
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        setLoading(false);
+        toast.error('تم حظر حسابك. تم تسجيل الخروج تلقائياً');
+        return false;
+      }
+
+      // 4. Fetch user profile
+      const userData = await fetchUserProfile(newSession.user.id, newSession.user.email!);
+      
+      // 5. Update state imperatively
+      setSession(newSession);
+      setUser(userData);
+      setLoading(false);
+      
+      console.log('✅ Login complete, user state updated:', userData.role);
+      return true;
     } catch (error) {
       console.error('❌ Login error:', error);
-      authStateResolvers.current = null;
-      if (timeoutId) clearTimeout(timeoutId);
+      setLoading(false);
       return false;
     }
-  }, [baseLogin]);
+  }, [baseLogin, setLoading]);
 
-  // Wrapper adminLogin function that waits for auth state to be fully updated
+  // Imperative adminLogin function that manually fetches and updates state after successful auth
   const adminLogin = useCallback(async (email: string, password: string): Promise<boolean> => {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    setLoading(true);
     
-    // Create a promise that will be resolved when onAuthStateChange completes
-    const authStatePromise = new Promise<AuthUser | null>((resolve, reject) => {
-      authStateResolvers.current = { resolve, reject };
-    });
-
-    // Create timeout promise with cleanup
-    const timeoutPromise = new Promise<null>((_, reject) => {
-      timeoutId = setTimeout(() => {
-        reject(new Error('Auth state update timeout'));
-      }, 15000);
-    });
-
     try {
+      // 1. Attempt Supabase admin login
       const success = await baseAdminLogin(email, password);
       if (!success) {
-        // Clear the resolver if login failed at Supabase level
-        authStateResolvers.current = null;
-        if (timeoutId) clearTimeout(timeoutId);
+        setLoading(false);
         return false;
       }
 
-      // Wait for the auth state change to complete (profile fetch, etc.)
-      const userData = await Promise.race([authStatePromise, timeoutPromise]);
+      // 2. Immediately fetch session manually (don't wait for onAuthStateChange)
+      console.log('👑 Admin login successful, fetching session manually...');
+      const { data: { session: newSession }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !newSession || !newSession.user) {
+        console.error('❌ Failed to get session after admin login:', sessionError);
+        setLoading(false);
+        return false;
+      }
 
-      // Clean up timeout
-      if (timeoutId) clearTimeout(timeoutId);
+      // 3. Check if user is banned
+      const { data: canAuth } = await supabase.rpc('can_user_authenticate', {
+        _user_id: newSession.user.id
+      });
 
-      return userData !== null;
+      if (canAuth === false) {
+        console.warn('🚫 Banned user detected');
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        setLoading(false);
+        toast.error('تم حظر حسابك. تم تسجيل الخروج تلقائياً');
+        return false;
+      }
+
+      // 4. Fetch user profile
+      const userData = await fetchUserProfile(newSession.user.id, newSession.user.email!);
+      
+      // 5. Update state imperatively
+      setSession(newSession);
+      setUser(userData);
+      setLoading(false);
+      
+      console.log('✅ Admin login complete, user state updated:', userData.role);
+      return true;
     } catch (error) {
       console.error('❌ Admin login error:', error);
-      authStateResolvers.current = null;
-      if (timeoutId) clearTimeout(timeoutId);
+      setLoading(false);
       return false;
     }
-  }, [baseAdminLogin]);
+  }, [baseAdminLogin, setLoading]);
 
-  // Wrapper logout function that waits for auth state to be fully updated
+  // Imperative logout function that manually clears state after logout
   const logout = useCallback(async (): Promise<void> => {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    
-    // Create a promise that will be resolved when onAuthStateChange completes
-    // For logout, we treat timeout as success since the user should be logged out anyway
-    const authStatePromise = new Promise<AuthUser | null>((resolve) => {
-      authStateResolvers.current = { 
-        resolve, 
-        reject: (error) => {
-          console.warn('Logout rejection (treating as success):', error);
-          resolve(null);
-        }
-      };
-    });
-
-    // Create timeout promise that resolves (not rejects) for logout
-    const timeoutPromise = new Promise<null>((resolve) => {
-      timeoutId = setTimeout(() => {
-        console.log('Logout timeout reached, proceeding...');
-        resolve(null);
-      }, 5000);
-    });
-
     try {
       await baseLogout();
-
-      // Wait for the auth state change to complete
-      await Promise.race([authStatePromise, timeoutPromise]);
       
-      // Clean up timeout
-      if (timeoutId) clearTimeout(timeoutId);
+      // Immediately clear state (don't wait for onAuthStateChange)
+      setUser(null);
+      setSession(null);
+      console.log('✅ Logout complete, state cleared');
     } catch (error) {
       console.error('❌ Logout error:', error);
-      authStateResolvers.current = null;
-      if (timeoutId) clearTimeout(timeoutId);
-      // Force clear state on error
+      // Force clear state on error anyway
       setUser(null);
       setSession(null);
     }
