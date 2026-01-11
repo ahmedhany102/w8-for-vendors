@@ -7,9 +7,17 @@ interface ImageUploaderProps {
   value?: string[];
   onChange: (imgs: string[]) => void;
   label?: string;
+  bucket?: string;  // Default: 'products', can be 'promos' for categories/ads
+  folder?: string;  // Default: '' (root), can be 'categories/' or 'images/'
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ value = [], onChange, label }) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({
+  value = [],
+  onChange,
+  label,
+  bucket = 'products',
+  folder = ''
+}) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -32,11 +40,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ value = [], onChange, lab
         // 1. إنشاء اسم فريد للملف
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-        const filePath = `${fileName}`;
+        const filePath = folder ? `${folder}${fileName}` : fileName;
 
         // 2. الرفع المباشر لـ Supabase Storage
         const { error: uploadError } = await supabase.storage
-          .from('products') // تأكد إنك عملت bucket اسمه products
+          .from(bucket)
           .upload(filePath, file, {
             upsert: false,
             contentType: file.type // مهم عشان المتصفح يعرف نوع الملف
@@ -46,7 +54,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ value = [], onChange, lab
 
         // 3. الحصول على الرابط العلني (Public URL)
         const { data } = supabase.storage
-          .from('products')
+          .from(bucket)
           .getPublicUrl(filePath);
 
         uploadedUrls.push(data.publicUrl);

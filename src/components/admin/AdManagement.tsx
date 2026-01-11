@@ -1,4 +1,5 @@
 
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,8 +11,9 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSupabaseAds } from "@/hooks/useSupabaseAds";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Trash2, Plus, Edit, Eye, EyeOff, Upload, Link, Monitor, Smartphone } from "lucide-react";
+import { Trash2, Plus, Edit, Eye, EyeOff, Upload, Link, Monitor, Smartphone, Loader2 } from "lucide-react";
 
 /**
  * Sanitize redirect URL to ensure it's an internal path only
@@ -49,6 +51,7 @@ const AdManagement = () => {
   const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>('horizontal');
   const [isActive, setIsActive] = useState(true);
   const [uploadMethod, setUploadMethod] = useState<"url" | "file">("url");
+  const [isUploading, setIsUploading] = useState(false);
 
   const resetForm = () => {
     setTitle("");
@@ -62,8 +65,8 @@ const AdManagement = () => {
     setUploadMethod("url");
   };
 
-  // Handle file upload and convert to base64
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle file selection (no longer converts to Base64)
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -77,17 +80,63 @@ const AdManagement = () => {
       }
 
       setImageFile(file);
+      // Show preview using object URL (not Base64)
+      setImageUrl(URL.createObjectURL(file));
+    }
+  };
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  // Upload file to Supabase Storage and return public URL
+  const uploadToStorage = async (file: File): Promise<string | null> => {
+    try {
+      setIsUploading(true);
+
+      // Generate unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `images/${fileName}`;
+
+      // Upload to Supabase Storage bucket 'promos' (neutral name to avoid ad blockers)
+      const { data, error } = await supabase.storage
+        .from('promos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Storage upload error:', error);
+        toast.error('Failed to upload image: ' + error.message);
+        return null;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('promos')
+        .getPublicUrl(filePath);
+
+      return urlData.publicUrl;
+    } catch (err) {
+      console.error('Upload exception:', err);
+      toast.error('Failed to upload image');
+      return null;
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleAddAd = async () => {
-    if (!imageUrl.trim()) {
+    let finalImageUrl = imageUrl.trim();
+
+    // If using file upload, upload to Storage first
+    if (uploadMethod === 'file' && imageFile) {
+      const storageUrl = await uploadToStorage(imageFile);
+      if (!storageUrl) {
+        return; // Upload failed, error already shown
+      }
+      finalImageUrl = storageUrl;
+    }
+
+    if (!finalImageUrl) {
       toast.error("Image is required (either URL or file upload)");
       return;
     }
@@ -98,7 +147,7 @@ const AdManagement = () => {
     const success = await addAd({
       title: title.trim() || undefined,
       description: description.trim() || undefined,
-      image_url: imageUrl.trim(),
+      image_url: finalImageUrl,
       redirect_url: cleanRedirectUrl || undefined,
       position,
       is_active: isActive,
@@ -112,7 +161,23 @@ const AdManagement = () => {
   };
 
   const handleEditAd = async () => {
-    if (!editingAd || !imageUrl.trim()) {
+    if (!editingAd) {
+      toast.error("No ad selected for editing");
+      return;
+    }
+
+    let finalImageUrl = imageUrl.trim();
+
+    // If using file upload with a new file, upload to Storage first
+    if (uploadMethod === 'file' && imageFile) {
+      const storageUrl = await uploadToStorage(imageFile);
+      if (!storageUrl) {
+        return; // Upload failed, error already shown
+      }
+      finalImageUrl = storageUrl;
+    }
+
+    if (!finalImageUrl) {
       toast.error("Image is required");
       return;
     }
@@ -123,7 +188,7 @@ const AdManagement = () => {
     const success = await updateAd(editingAd.id, {
       title: title.trim() || undefined,
       description: description.trim() || undefined,
-      image_url: imageUrl.trim(),
+      image_url: finalImageUrl,
       redirect_url: cleanRedirectUrl || undefined,
       position,
       is_active: isActive,
@@ -214,7 +279,7 @@ const AdManagement = () => {
             <Input
               type="file"
               accept="image/*"
-              onChange={handleFileUpload}
+              onChange={handleFileSelect}
               className="file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
             />
             <p className="text-xs text-gray-500 mt-1">Max file size: 5MB</p>

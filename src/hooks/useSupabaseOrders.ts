@@ -18,8 +18,9 @@ export const useSupabaseOrders = () => {
 
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('id, customer_info, items, status, created_at')
+        .order('created_at', { ascending: false })
+        .range(0, 49); // Limit to 50 orders to reduce egress
 
       if (error) {
         console.error('Error fetching orders:', error);

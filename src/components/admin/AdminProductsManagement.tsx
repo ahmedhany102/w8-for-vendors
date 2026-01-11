@@ -60,7 +60,7 @@ export const AdminProductsManagement: React.FC = () => {
     vendorFilter || undefined,
     statusFilter
   );
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
@@ -73,7 +73,7 @@ export const AdminProductsManagement: React.FC = () => {
         .from('profiles')
         .select('id, email, name')
         .order('name');
-      
+
       if (!error && data) {
         setVendors(data);
       }

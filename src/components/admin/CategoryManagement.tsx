@@ -97,15 +97,22 @@ const CategoryManagement = () => {
     refetch();
   };
 
-  // Delete category
+  // Delete category (soft delete - set is_active to false)
   const handleDeleteCategory = async (id: string, categoryName: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${categoryName}"?`)) return;
-    const { error } = await supabase.from('categories').delete().eq('id', id);
+    if (!window.confirm(`Are you sure you want to archive "${categoryName}"?`)) return;
+
+    // SOFT DELETE: Set is_active to false instead of deleting
+    // This prevents FK constraint violations with products
+    const { error } = await supabase
+      .from('categories')
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq('id', id);
+
     if (error) {
-      toast.error('Failed to delete category: ' + error.message);
+      toast.error('Failed to archive category: ' + error.message);
       return;
     }
-    toast.success('Category deleted successfully!');
+    toast.success('Category archived successfully!');
     refetch();
   };
 
@@ -183,6 +190,8 @@ const CategoryManagement = () => {
                 <ImageUploader
                   value={imageUrl ? [imageUrl] : []}
                   onChange={(urls) => setImageUrl(urls[0] || "")}
+                  bucket="promos"
+                  folder="categories/"
                 />
               </div>
               <div className="flex items-center space-x-2">
@@ -288,6 +297,8 @@ const CategoryManagement = () => {
               <ImageUploader
                 value={imageUrl ? [imageUrl] : []}
                 onChange={(urls) => setImageUrl(urls[0] || "")}
+                bucket="promos"
+                folder="categories/"
               />
             </div>
             <div className="flex items-center space-x-2">

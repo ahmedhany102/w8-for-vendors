@@ -35,41 +35,42 @@ export const useProductFetching = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      
+
       // Start loading timeout fallback
       LoadingFallback.startTimeout('product-fetch', 5000, () => {
         setLoading(false);
         setProducts([]);
       });
-      
+
       console.log('🔄 Fetching products with public access...');
-      
+
       // Fetch products without authentication requirement
       const { data, error } = await supabase
         .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
+        .select('id, name, description, price, main_image, images, colors, sizes, discount, featured, stock, inventory, status, category_id, vendor_id')
+        .order('created_at', { ascending: false })
+        .range(0, 49); // Limit to 50 products to reduce egress
+
       // Clear loading timeout
       LoadingFallback.clearTimeout('product-fetch');
-      
+
       if (error) {
         console.error('❌ Error fetching products:', error);
         toast.error('Failed to load products: ' + error.message);
         setProducts([]);
         return;
       }
-      
+
       console.log('✅ Raw products fetched:', data?.length || 0);
-      
+
       // Validate and clean product data
       const validatedProducts = (data || [])
         .map(validateProductData)
         .filter((product): product is Product => product !== null);
-      
+
       console.log('✅ Validated products:', validatedProducts.length);
       setProducts(validatedProducts);
-      
+
     } catch (error: any) {
       LoadingFallback.clearTimeout('product-fetch');
       console.error('💥 Exception while fetching products:', error);

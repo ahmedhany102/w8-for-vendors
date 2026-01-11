@@ -60,10 +60,12 @@ const VendorAdsManagement: React.FC<VendorAdsManagementProps> = ({ vendorId }) =
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [redirectUrl, setRedirectUrl] = useState('');
   const [position, setPosition] = useState<'top' | 'mid'>('top');
   const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>('horizontal');
   const [isActive, setIsActive] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
 
   const fetchAds = useCallback(async () => {
     if (!vendorId) {
@@ -106,6 +108,7 @@ const VendorAdsManagement: React.FC<VendorAdsManagementProps> = ({ vendorId }) =
     setTitle('');
     setDescription('');
     setImageUrl('');
+    setImageFile(null);
     setRedirectUrl('');
     setPosition('top');
     setOrientation('horizontal');
@@ -113,7 +116,8 @@ const VendorAdsManagement: React.FC<VendorAdsManagementProps> = ({ vendorId }) =
     setEditingAd(null);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle file selection (no Base64 - just preview)
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -127,15 +131,63 @@ const VendorAdsManagement: React.FC<VendorAdsManagementProps> = ({ vendorId }) =
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImageUrl(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    setImageFile(file);
+    // Show preview using object URL (not Base64)
+    setImageUrl(URL.createObjectURL(file));
+  };
+
+  // Upload file to Supabase Storage and return public URL
+  const uploadToStorage = async (file: File): Promise<string | null> => {
+    try {
+      setIsUploading(true);
+
+      // Generate unique filename with vendor prefix
+      const fileExt = file.name.split('.').pop();
+      const fileName = `vendor_${vendorId}_${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `vendor-images/${fileName}`;
+
+      // Upload to Supabase Storage bucket 'promos'
+      const { data, error } = await supabase.storage
+        .from('promos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Storage upload error:', error);
+        toast.error('فشل في رفع الصورة: ' + error.message);
+        return null;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('promos')
+        .getPublicUrl(filePath);
+
+      return urlData.publicUrl;
+    } catch (err) {
+      console.error('Upload exception:', err);
+      toast.error('فشل في رفع الصورة');
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleAddAd = async () => {
-    if (!imageUrl) {
+    let finalImageUrl = imageUrl;
+
+    // If there's a file to upload, upload to Storage first
+    if (imageFile) {
+      const storageUrl = await uploadToStorage(imageFile);
+      if (!storageUrl) {
+        return; // Upload failed, error already shown
+      }
+      finalImageUrl = storageUrl;
+    }
+
+    if (!finalImageUrl) {
       toast.error('يرجى إضافة صورة');
       return;
     }
@@ -152,7 +204,7 @@ const VendorAdsManagement: React.FC<VendorAdsManagementProps> = ({ vendorId }) =
           vendor_id: vendorId,
           title: title || null,
           description: description || null,
-          image_url: imageUrl,
+          image_url: finalImageUrl,
           redirect_url: sanitizeRedirectUrl(redirectUrl) || null,
           position: positionValue,
           is_active: isActive,
@@ -179,7 +231,23 @@ const VendorAdsManagement: React.FC<VendorAdsManagementProps> = ({ vendorId }) =
   };
 
   const handleEditAd = async () => {
-    if (!editingAd || !imageUrl) {
+    if (!editingAd) {
+      toast.error('لا يوجد إعلان للتحديث');
+      return;
+    }
+
+    let finalImageUrl = imageUrl;
+
+    // If there's a new file to upload, upload to Storage first
+    if (imageFile) {
+      const storageUrl = await uploadToStorage(imageFile);
+      if (!storageUrl) {
+        return; // Upload failed, error already shown
+      }
+      finalImageUrl = storageUrl;
+    }
+
+    if (!finalImageUrl) {
       toast.error('يرجى إضافة صورة');
       return;
     }
@@ -196,7 +264,7 @@ const VendorAdsManagement: React.FC<VendorAdsManagementProps> = ({ vendorId }) =
         .update({
           title: title || null,
           description: description || null,
-          image_url: imageUrl,
+          image_url: finalImageUrl,
           redirect_url: sanitizeRedirectUrl(redirectUrl) || null,
           position: positionValue,
           is_active: isActive,
@@ -304,7 +372,7 @@ const VendorAdsManagement: React.FC<VendorAdsManagementProps> = ({ vendorId }) =
           <input
             type="file"
             accept="image/*"
-            onChange={handleFileUpload}
+            onChange={handleFileSelect}
             className="hidden"
             id={`ad-image-${isEdit ? 'edit' : 'add'}`}
           />

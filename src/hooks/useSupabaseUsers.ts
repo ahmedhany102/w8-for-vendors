@@ -16,15 +16,16 @@ export const useSupabaseUsers = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
+        .select('id, name, email, role, status, created_at, is_admin, is_super_admin')
+        .order('created_at', { ascending: false })
+        .range(0, 49); // Limit to 50 users to reduce egress
+
       if (error) {
         console.error('Error fetching users:', error);
         toast.error('Failed to load users');
         return;
       }
-      
+
       console.log('Fetched users:', data);
       setUsers(data || []);
     } catch (error) {
@@ -46,13 +47,13 @@ export const useSupabaseUsers = () => {
         }])
         .select()
         .single();
-      
+
       if (error) {
         console.error('Error adding user:', error);
         toast.error('Failed to add user: ' + error.message);
         throw error;
       }
-      
+
       console.log('User added successfully:', data);
       toast.success('User added successfully');
       await fetchUsers();
@@ -72,13 +73,13 @@ export const useSupabaseUsers = () => {
         .eq('id', id)
         .select()
         .single();
-      
+
       if (error) {
         console.error('Error updating user:', error);
         toast.error('Failed to update user: ' + error.message);
         throw error;
       }
-      
+
       console.log('User updated successfully:', data);
       toast.success('User updated successfully');
       await fetchUsers();
@@ -96,13 +97,13 @@ export const useSupabaseUsers = () => {
         .from('profiles')
         .delete()
         .eq('id', id);
-      
+
       if (error) {
         console.error('Error deleting user:', error);
         toast.error('Failed to delete user: ' + error.message);
         throw error;
       }
-      
+
       console.log('User deleted successfully');
       toast.success('User deleted successfully');
       await fetchUsers();

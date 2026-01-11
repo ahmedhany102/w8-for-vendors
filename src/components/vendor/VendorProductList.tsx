@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Package, Edit, Trash2, Eye, EyeOff, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -25,6 +25,7 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
   active: { label: 'نشط', variant: 'default' },
   inactive: { label: 'غير نشط', variant: 'outline' },
   rejected: { label: 'مرفوض', variant: 'destructive' },
+  archived: { label: 'مؤرشف', variant: 'outline' },
 };
 
 export const VendorProductList: React.FC<VendorProductListProps> = ({
@@ -69,26 +70,37 @@ export const VendorProductList: React.FC<VendorProductListProps> = ({
         </TableHeader>
         <TableBody>
           {products.map((product) => {
+            const isArchived = product.status === 'archived';
             const status = statusConfig[product.status || 'active'] || statusConfig.active;
             const imageUrl = product.main_image || product.image_url || (product.images?.[0]) || '/placeholder.svg';
-            
+
             return (
-              <TableRow key={product.id}>
+              <TableRow key={product.id} className={isArchived ? 'bg-gray-100 opacity-70' : ''}>
                 <TableCell>
                   <img
                     src={imageUrl}
                     alt={product.name}
-                    className="w-12 h-12 object-cover rounded-md"
+                    className={`w-12 h-12 object-cover rounded-md ${isArchived ? 'grayscale' : ''}`}
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = '/placeholder.svg';
                     }}
                   />
                 </TableCell>
-                <TableCell className="font-medium">{product.name}</TableCell>
+                <TableCell className="font-medium">
+                  {product.name}
+                  {isArchived && (
+                    <span className="inline-flex items-center gap-1 mr-2 text-xs text-gray-500">
+                      <Archive className="h-3 w-3" />
+                    </span>
+                  )}
+                </TableCell>
                 <TableCell>{product.price} ج.م</TableCell>
                 <TableCell>{product.stock || product.inventory || 0}</TableCell>
                 <TableCell>
-                  <Badge variant={status.variant}>{status.label}</Badge>
+                  <Badge variant={status.variant} className={isArchived ? 'bg-gray-400' : ''}>
+                    {isArchived && <Archive className="h-3 w-3 ml-1" />}
+                    {status.label}
+                  </Badge>
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">

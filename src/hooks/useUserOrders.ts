@@ -25,37 +25,30 @@ export const useUserOrders = () => {
         email: user.email
       });
 
-      // Primary query: Find orders by user_id in customer_info
-      const { data: userIdOrders, error: userIdError } = await supabase
+      // Combined query: Find orders by user_id OR email in customer_info
+      // Using a single query instead of two to reduce egress
+      const { data: allOrders, error } = await supabase
         .from('orders')
-        .select('*')
-        .eq('customer_info->>user_id', user.id)
-        .order('created_at', { ascending: false });
+        .select('id, customer_info, items, status, created_at')
+        .or(`customer_info->>user_id.eq.${user.id},customer_info->>email.eq.${user.email}`)
+        .order('created_at', { ascending: false })
+        .range(0, 19); // Limit to 20 orders per user to reduce egress
 
-      if (userIdError) {
-        console.error('Error fetching orders by user ID:', userIdError);
+      if (error) {
+        console.error('Error fetching orders:', error);
+        toast.error('Failed to load your orders');
+        setOrders([]);
+        return;
       }
 
-      // Fallback query: Find orders by email in customer_info
-      const { data: emailOrders, error: emailError } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('customer_info->>email', user.email)
-        .order('created_at', { ascending: false });
-
-      if (emailError) {
-        console.error('Error fetching orders by email:', emailError);
-      }
-
-      // Combine and deduplicate results
-      const allOrders = [...(userIdOrders || []), ...(emailOrders || [])];
-      const uniqueOrders = allOrders.filter((order, index, self) => 
+      // Deduplicate results (in case both conditions match same order)
+      const uniqueOrders = allOrders?.filter((order, index, self) =>
         index === self.findIndex(o => o.id === order.id)
-      );
+      ) || [];
 
       console.log('Successfully found user orders:', uniqueOrders);
       setOrders(uniqueOrders);
-      
+
     } catch (error) {
       console.error('Exception while fetching user orders:', error);
       toast.error('Failed to load your orders');
@@ -113,9 +106,9 @@ export const useUserOrders = () => {
     }
   };
 
-  return { 
-    orders, 
-    loading, 
+  return {
+    orders,
+    loading,
     cancelling,
     refetch: fetchUserOrders,
     cancelOrder
