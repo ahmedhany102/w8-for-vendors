@@ -7,6 +7,7 @@ export interface VendorOrder {
   order_id: string;
   order_number: string;
   order_status: string;
+  payment_status: string;
   order_date: string;
   customer_name: string | null;
   customer_email: string | null;
@@ -42,7 +43,7 @@ export const useVendorOrders = (statusFilter?: string) => {
 
     try {
       setLoading(true);
-      
+
       const { data, error } = await supabase.rpc('get_vendor_orders', {
         _vendor_id: null,
         _status_filter: statusFilter || 'all'
@@ -53,8 +54,12 @@ export const useVendorOrders = (statusFilter?: string) => {
         toast.error('فشل في تحميل الطلبات');
         return;
       }
-
-      setOrders(data || []);
+      // Map data to include payment_status (may not be returned by RPC)
+      const mappedOrders: VendorOrder[] = (data || []).map((order: any) => ({
+        ...order,
+        payment_status: order.payment_status || 'pending'
+      }));
+      setOrders(mappedOrders);
     } catch (error) {
       console.error('Error in fetchOrders:', error);
       toast.error('حدث خطأ أثناء تحميل الطلبات');
@@ -112,7 +117,7 @@ export const useVendorOrderDetails = (orderId: string) => {
 
     try {
       setLoading(true);
-      
+
       // Fetch order info for full details (address, payment, etc.)
       const { data: orderData, error: orderError } = await supabase.rpc('get_vendor_order_info', {
         _order_id: orderId
@@ -123,7 +128,7 @@ export const useVendorOrderDetails = (orderId: string) => {
       } else if (orderData && orderData.length > 0) {
         setOrderInfo(orderData[0] as VendorOrderInfo);
       }
-      
+
       const { data, error } = await supabase.rpc('get_vendor_order_items', {
         _order_id: orderId,
         _vendor_id: null
@@ -171,11 +176,35 @@ export const useVendorOrderDetails = (orderId: string) => {
     }
   };
 
+  const updatePaymentStatus = async (newStatus: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ payment_status: newStatus })
+        .eq('id', orderId);
+
+      if (error) {
+        console.error('Error updating payment status:', error);
+        toast.error('فشل في تحديث حالة الدفع');
+        return false;
+      }
+
+      toast.success('تم تحديث حالة الدفع بنجاح');
+      await fetchItems(); // Refetch to update orderInfo
+      return true;
+    } catch (error) {
+      console.error('Error in updatePaymentStatus:', error);
+      toast.error('حدث خطأ أثناء تحديث حالة الدفع');
+      return false;
+    }
+  };
+
   return {
     items,
     orderInfo,
     loading,
     updateItemStatus,
+    updatePaymentStatus,
     refetch: fetchItems
   };
 };
@@ -194,7 +223,7 @@ export const useAdminOrders = (vendorFilter?: string, statusFilter?: string) => 
 
     try {
       setLoading(true);
-      
+
       const { data, error } = await supabase.rpc('get_vendor_orders', {
         _vendor_id: vendorFilter || null,
         _status_filter: statusFilter || 'all'
@@ -206,7 +235,12 @@ export const useAdminOrders = (vendorFilter?: string, statusFilter?: string) => 
         return;
       }
 
-      setOrders(data || []);
+      // Map data to include payment_status (may not be returned by RPC)
+      const mappedOrders: VendorOrder[] = (data || []).map((order: any) => ({
+        ...order,
+        payment_status: order.payment_status || 'pending'
+      }));
+      setOrders(mappedOrders);
     } catch (error) {
       console.error('Error in fetchOrders:', error);
       toast.error('حدث خطأ أثناء تحميل الطلبات');
@@ -269,7 +303,7 @@ export const useAdminOrderDetails = (orderId: string) => {
 
     try {
       setLoading(true);
-      
+
       // Fetch order info
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
@@ -284,7 +318,7 @@ export const useAdminOrderDetails = (orderId: string) => {
       }
 
       setOrderInfo(orderData);
-      
+
       // Fetch all items (admin sees all)
       const { data: itemsData, error: itemsError } = await supabase.rpc('get_vendor_order_items', {
         _order_id: orderId,

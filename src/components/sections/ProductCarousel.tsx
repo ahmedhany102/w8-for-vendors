@@ -265,15 +265,32 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                   {product.name}
                 </h3>
 
-                {/* Rating */}
-                {product.rating && (
-                  <div className="flex items-center gap-1 mb-2">
+                {/* Rating - only show if rating > 0 */}
+                {Number(product.rating || product.average_rating || 0) > 0 && (
+                  <div className="flex items-center gap-1 mb-1">
                     <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                     <span className="text-xs text-muted-foreground">
-                      {product.rating.toFixed(1)}
+                      {Number(product.rating || product.average_rating || 0).toFixed(1)}
+                      {Number(product.reviews_count || 0) > 0 && (
+                        <span className="text-muted-foreground/70"> ({product.reviews_count})</span>
+                      )}
                     </span>
                   </div>
                 )}
+
+                {/* Shipping Badges */}
+                <div className="flex flex-wrap gap-1 mb-1">
+                  {product.is_free_shipping && (
+                    <span className="inline-flex items-center text-xs text-primary font-medium">
+                      🚚 شحن مجاني
+                    </span>
+                  )}
+                  {product.is_fast_shipping && (
+                    <span className="inline-flex items-center text-xs text-amber-500 font-medium">
+                      ⚡ شحن سريع
+                    </span>
+                  )}
+                </div>
 
                 {/* Price */}
                 <div className="flex items-center gap-2 mb-2">

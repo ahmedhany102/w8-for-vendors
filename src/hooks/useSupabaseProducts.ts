@@ -135,7 +135,15 @@ export const useSupabaseProducts = () => {
           // Include vendor info from RPC
           vendor_name: product.vendor_name || null,
           vendor_slug: product.vendor_slug || null,
-          vendor_logo_url: product.vendor_logo_url || null
+          vendor_logo_url: product.vendor_logo_url || null,
+          // Include shipping badges and ratings for ProductCard display
+          // Cast to any to access fields that may exist in DB but not in RPC type
+          is_free_shipping: (product as any).is_free_shipping || false,
+          is_fast_shipping: (product as any).is_fast_shipping || false,
+          is_best_seller: (product as any).is_best_seller || false,
+          average_rating: Number((product as any).average_rating) || 0,
+          reviews_count: Number((product as any).reviews_count) || 0,
+          hasDiscount: Number(product.discount) > 0
         };
       });
 

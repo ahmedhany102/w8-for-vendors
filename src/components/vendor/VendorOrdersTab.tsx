@@ -52,10 +52,26 @@ const OrderDetailsDialog: React.FC<{
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }> = ({ orderId, orderNumber, open, onOpenChange }) => {
-  const { items, orderInfo, loading, updateItemStatus } = useVendorOrderDetails(orderId);
+  const { items, orderInfo, loading, updateItemStatus, updatePaymentStatus } = useVendorOrderDetails(orderId);
 
   const handleStatusChange = async (itemId: string, newStatus: string) => {
     await updateItemStatus(itemId, newStatus);
+  };
+
+  const handlePaymentStatusChange = async (newStatus: string) => {
+    await updatePaymentStatus(newStatus);
+  };
+
+  // Payment status configuration
+  const paymentStatusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+    pending: { label: 'معلق', variant: 'secondary' },
+    PENDING: { label: 'معلق', variant: 'secondary' },
+    paid: { label: 'تم الدفع', variant: 'default' },
+    PAID: { label: 'تم الدفع', variant: 'default' },
+    failed: { label: 'فشل', variant: 'destructive' },
+    FAILED: { label: 'فشل', variant: 'destructive' },
+    refunded: { label: 'مرتجع', variant: 'outline' },
+    REFUNDED: { label: 'مرتجع', variant: 'outline' },
   };
 
   return (
@@ -87,6 +103,10 @@ const OrderDetailsDialog: React.FC<{
                     <span className="text-muted-foreground">الهاتف: </span>
                     <span>{orderInfo.customer_info?.phone || '-'}</span>
                   </div>
+                  <div>
+                    <span className="text-muted-foreground">البريد الإلكتروني: </span>
+                    <span>{orderInfo.customer_info?.email || '-'}</span>
+                  </div>
                   <div className="col-span-2">
                     <span className="text-muted-foreground">العنوان: </span>
                     <span>
@@ -100,19 +120,36 @@ const OrderDetailsDialog: React.FC<{
                     <span className="text-muted-foreground">طريقة الدفع: </span>
                     <span>{orderInfo.payment_info?.method === 'CASH' ? 'الدفع عند الاستلام' : orderInfo.payment_info?.method || '-'}</span>
                   </div>
-                  <div>
+                  <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">حالة الدفع: </span>
-                    <Badge variant={orderInfo.payment_status === 'PAID' ? 'default' : 'secondary'}>
-                      {orderInfo.payment_status === 'PAID' ? 'مدفوع' : 'غير مدفوع'}
-                    </Badge>
+                    <Select
+                      value={orderInfo.payment_status?.toLowerCase() || 'pending'}
+                      onValueChange={handlePaymentStatusChange}
+                    >
+                      <SelectTrigger className="w-[140px] h-8">
+                        <SelectValue placeholder="حالة الدفع" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">معلق</SelectItem>
+                        <SelectItem value="paid">تم الدفع</SelectItem>
+                        <SelectItem value="failed">فشل</SelectItem>
+                        <SelectItem value="refunded">مرتجع</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  {orderInfo.notes && (
-                    <div className="col-span-2">
-                      <span className="text-muted-foreground">ملاحظات: </span>
-                      <span>{orderInfo.notes}</span>
-                    </div>
-                  )}
                 </div>
+              </div>
+            )}
+
+            {/* Order Notes Section - Always visible */}
+            {orderInfo && (
+              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-4 rounded-lg">
+                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                  📝 ملاحظات الطلب
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  {orderInfo.notes || 'لا توجد ملاحظات'}
+                </p>
               </div>
             )}
 
@@ -252,7 +289,8 @@ export const VendorOrdersTab: React.FC<VendorOrdersTabProps> = ({ isApproved }) 
                     <TableHead className="text-right">العميل</TableHead>
                     <TableHead className="text-right">المنتجات</TableHead>
                     <TableHead className="text-right">المبلغ</TableHead>
-                    <TableHead className="text-right">الحالة</TableHead>
+                    <TableHead className="text-right">حالة الطلب</TableHead>
+                    <TableHead className="text-right">حالة الدفع</TableHead>
                     <TableHead className="text-right">الإجراءات</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -260,6 +298,19 @@ export const VendorOrdersTab: React.FC<VendorOrdersTabProps> = ({ isApproved }) 
                   {orders.map((order) => {
                     const status = statusConfig[order.order_status] || statusConfig.pending;
                     const StatusIcon = status.icon;
+
+                    // Payment status config
+                    const paymentConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+                      paid: { label: '💰 تم الدفع', variant: 'default' },
+                      PAID: { label: '💰 تم الدفع', variant: 'default' },
+                      pending: { label: '⏳ غير مدفوع', variant: 'secondary' },
+                      PENDING: { label: '⏳ غير مدفوع', variant: 'secondary' },
+                      failed: { label: '❌ فشل الدفع', variant: 'destructive' },
+                      FAILED: { label: '❌ فشل الدفع', variant: 'destructive' },
+                      refunded: { label: '↩️ مرتجع', variant: 'outline' },
+                      REFUNDED: { label: '↩️ مرتجع', variant: 'outline' },
+                    };
+                    const paymentStatus = paymentConfig[order.payment_status] || paymentConfig.pending;
 
                     return (
                       <TableRow key={order.order_id}>
@@ -274,6 +325,11 @@ export const VendorOrdersTab: React.FC<VendorOrdersTabProps> = ({ isApproved }) 
                           <Badge variant={status.variant} className="flex items-center gap-1 w-fit">
                             <StatusIcon className="h-3 w-3" />
                             {status.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={paymentStatus.variant} className="w-fit">
+                            {paymentStatus.label}
                           </Badge>
                         </TableCell>
                         <TableCell>

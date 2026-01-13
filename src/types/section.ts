@@ -27,4 +27,11 @@ export interface SectionProduct {
   vendor_name: string | null;
   vendor_slug: string | null;
   vendor_logo_url: string | null;
+  // Shipping badge fields
+  is_free_shipping?: boolean;
+  is_fast_shipping?: boolean;
+  // Rating fields
+  average_rating?: number;
+  reviews_count?: number;
+  hasDiscount?: boolean;
 }

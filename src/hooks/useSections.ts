@@ -64,7 +64,7 @@ export function useSectionProducts(sectionId: string, limit: number = 12) {
 
         if (error) throw error;
 
-        // Map to ensure stock/inventory have defaults
+        // Map to ensure stock/inventory have defaults, include badge fields if present
         const mappedProducts: SectionProduct[] = (data || []).map((p: any) => ({
           id: p.id,
           name: p.name || '',
@@ -76,7 +76,13 @@ export function useSectionProducts(sectionId: string, limit: number = 12) {
           inventory: p.inventory ?? 0,
           vendor_name: p.vendor_name || null,
           vendor_slug: p.vendor_slug || null,
-          vendor_logo_url: p.vendor_logo_url || null
+          vendor_logo_url: p.vendor_logo_url || null,
+          // Badge and rating fields
+          is_free_shipping: p.is_free_shipping || false,
+          is_fast_shipping: p.is_fast_shipping || false,
+          average_rating: p.average_rating || 0,
+          reviews_count: p.reviews_count || 0,
+          hasDiscount: (p.discount || 0) > 0
         }));
 
         setProducts(mappedProducts);
@@ -133,6 +139,8 @@ export function useBestSellers(limit: number = 12) {
             stock,
             inventory,
             vendor_id,
+            is_free_shipping,
+            is_fast_shipping,
             vendors!inner (
               name,
               logo_url,
@@ -164,7 +172,12 @@ export function useBestSellers(limit: number = 12) {
           inventory: p.inventory ?? 0,
           vendor_name: p.vendors?.name || null,
           vendor_slug: p.vendors?.slug || null,
-          vendor_logo_url: p.vendors?.logo_url || null
+          vendor_logo_url: p.vendors?.logo_url || null,
+          is_free_shipping: p.is_free_shipping || false,
+          is_fast_shipping: p.is_fast_shipping || false,
+          average_rating: p.rating || 0,
+          reviews_count: 0,
+          hasDiscount: (p.discount || 0) > 0
         }));
 
         setProducts(mappedProducts);
@@ -220,6 +233,8 @@ export function useHotDeals(limit: number = 12) {
             stock,
             inventory,
             vendor_id,
+            is_free_shipping,
+            is_fast_shipping,
             vendors!inner (
               name,
               logo_url,
@@ -251,7 +266,12 @@ export function useHotDeals(limit: number = 12) {
           inventory: p.inventory ?? 0,
           vendor_name: p.vendors?.name || null,
           vendor_slug: p.vendors?.slug || null,
-          vendor_logo_url: p.vendors?.logo_url || null
+          vendor_logo_url: p.vendors?.logo_url || null,
+          is_free_shipping: p.is_free_shipping || false,
+          is_fast_shipping: p.is_fast_shipping || false,
+          average_rating: p.rating || 0,
+          reviews_count: 0,
+          hasDiscount: (p.discount || 0) > 0
         }));
 
         setProducts(mappedProducts);
@@ -317,7 +337,13 @@ export function useLastViewed(limit: number = 10) {
           inventory: p.inventory ?? 0,
           vendor_name: p.vendor_name || null,
           vendor_slug: p.vendor_slug || null,
-          vendor_logo_url: p.vendor_logo_url || null
+          vendor_logo_url: p.vendor_logo_url || null,
+          // Badge and rating fields
+          is_free_shipping: p.is_free_shipping || false,
+          is_fast_shipping: p.is_fast_shipping || false,
+          average_rating: p.average_rating || 0,
+          reviews_count: p.reviews_count || 0,
+          hasDiscount: (p.discount || 0) > 0
         }));
 
         setProducts(mappedProducts);

@@ -46,10 +46,103 @@ const RevenueAnalytics: React.FC = () => {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.rpc('get_vendor_analytics');
 
-      if (error) throw error;
-      setAnalytics((data as VendorAnalytics[]) || []);
+      // 1. Fetch all active vendors
+      const { data: vendors, error: vendorsError } = await supabase
+        .from('vendors')
+        .select('id, name, commission_rate, logo_url, status')
+        .eq('status', 'active');
+
+      if (vendorsError) throw vendorsError;
+
+      if (!vendors || vendors.length === 0) {
+        setAnalytics([]);
+        return;
+      }
+
+      // 2. Fetch all order_items with vendor_id (for vendor products)
+      const { data: orderItems, error: itemsError } = await supabase
+        .from('order_items')
+        .select(`
+          id,
+          order_id,
+          vendor_id,
+          quantity,
+          total_price,
+          created_at
+        `)
+        .not('vendor_id', 'is', null);
+
+      if (itemsError) {
+        console.error('Error fetching order items:', itemsError);
+      }
+
+      // 3. Calculate per-vendor analytics
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekStart = new Date(now);
+      weekStart.setDate(weekStart.getDate() - 7);
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const vendorAnalytics: VendorAnalytics[] = vendors.map(vendor => {
+        // Filter order items for this vendor
+        const vendorItems = (orderItems || []).filter(item => item.vendor_id === vendor.id);
+
+        // Calculate totals
+        let totalRevenue = 0;
+        let totalOrders = 0;
+        let todayRevenue = 0;
+        let weekRevenue = 0;
+        let monthRevenue = 0;
+        const orderIds = new Set<string>();
+
+        vendorItems.forEach(item => {
+          const itemTotal = item.total_price || 0;
+          totalRevenue += itemTotal;
+
+          // Count unique orders
+          if (item.order_id) {
+            if (!orderIds.has(item.order_id)) {
+              orderIds.add(item.order_id);
+              totalOrders++;
+            }
+          }
+
+          // Time-based calculations
+          const itemDate = new Date(item.created_at);
+          if (itemDate >= todayStart) {
+            todayRevenue += itemTotal;
+          }
+          if (itemDate >= weekStart) {
+            weekRevenue += itemTotal;
+          }
+          if (itemDate >= monthStart) {
+            monthRevenue += itemTotal;
+          }
+        });
+
+        const commissionRate = vendor.commission_rate || 10;
+        const platformCommission = totalRevenue * (commissionRate / 100);
+        const vendorPayout = totalRevenue - platformCommission;
+
+        return {
+          vendor_id: vendor.id,
+          vendor_name: vendor.name,
+          commission_rate: commissionRate,
+          total_orders: totalOrders,
+          total_revenue: totalRevenue,
+          today_revenue: todayRevenue,
+          week_revenue: weekRevenue,
+          month_revenue: monthRevenue,
+          platform_commission: platformCommission,
+          vendor_payout: vendorPayout,
+        };
+      });
+
+      // Sort by total revenue descending
+      vendorAnalytics.sort((a, b) => b.total_revenue - a.total_revenue);
+
+      setAnalytics(vendorAnalytics);
     } catch (error: any) {
       console.error('Error fetching analytics:', error);
       toast.error('Failed to load analytics');
@@ -75,7 +168,7 @@ const RevenueAnalytics: React.FC = () => {
 
   const handleUpdateCommission = async () => {
     if (!selectedVendor) return;
-    
+
     const rate = parseFloat(newCommissionRate);
     if (isNaN(rate) || rate < 0 || rate > 100) {
       toast.error('Commission rate must be between 0 and 100');
@@ -83,10 +176,11 @@ const RevenueAnalytics: React.FC = () => {
     }
 
     try {
-      const { data, error } = await supabase.rpc('update_vendor_commission', {
-        _vendor_id: selectedVendor.vendor_id,
-        _commission_rate: rate
-      });
+      // Update commission_rate directly in vendors table
+      const { error } = await supabase
+        .from('vendors')
+        .update({ commission_rate: rate })
+        .eq('id', selectedVendor.vendor_id);
 
       if (error) throw error;
 
@@ -281,16 +375,16 @@ const RevenueAnalytics: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center gap-1">
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => openDetailsDialog(vendor)}
                           title="View Details"
                         >
                           <BarChart3 className="w-4 h-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => openCommissionDialog(vendor)}
                           title="Edit Commission"
@@ -324,7 +418,7 @@ const RevenueAnalytics: React.FC = () => {
             </div>
             <div>
               <Label>New Commission Rate (%)</Label>
-              <Input 
+              <Input
                 type="number"
                 min="0"
                 max="100"

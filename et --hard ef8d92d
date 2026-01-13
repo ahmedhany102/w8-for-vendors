@@ -1,0 +1,35 @@
+[33m4baec03[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/copilot/fix-auth-login-logout-issue[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: reset: moving to origin/copilot/fix-auth-login-logout-issue
+[33mef8d92d[m HEAD@{1}: reset: moving to HEAD
+[33mef8d92d[m HEAD@{2}: commit (merge): Resolved merge conflict
+[33ma46bc24[m HEAD@{3}: reset: moving to HEAD
+[33ma46bc24[m HEAD@{4}: commit: Feat: Vendor Landing & Auto-Login | Fix: HTTPS, Order Totals & UI Alignment
+[33m1672173[m HEAD@{5}: commit: Fix mixed content security issue in all footers
+[33m8397957[m HEAD@{6}: commit: Fix UI alignment, Routing logic and HTTPS links
+[33m7baec1b[m HEAD@{7}: commit: Refactor: Implement Soft Delete for Products & Categories, Fix Vendor Dashboard UI, and Optimize Database Egress
+[33m49038cf[m HEAD@{8}: commit: Final maximum-impact favicon
+[33mffd1252[m HEAD@{9}: commit: Update final professional favicon with padding
+[33m5a6d15a[m HEAD@{10}: commit: Add resized professional favicon
+[33m10a41da[m HEAD@{11}: commit: Fix favicon margins
+[33m011dae2[m[33m ([m[1;31morigin/update-favicon[m[33m, [m[1;32mupdate-favicon[m[33m)[m HEAD@{12}: reset: moving to origin/main
+[33m575c95f[m HEAD@{13}: checkout: moving from update-favicon to main
+[33m011dae2[m[33m ([m[1;31morigin/update-favicon[m[33m, [m[1;32mupdate-favicon[m[33m)[m HEAD@{14}: checkout: moving from update-favicon to update-favicon
+[33m011dae2[m[33m ([m[1;31morigin/update-favicon[m[33m, [m[1;32mupdate-favicon[m[33m)[m HEAD@{15}: commit: Update favicon
+[33m575c95f[m HEAD@{16}: checkout: moving from main to update-favicon
+[33m575c95f[m HEAD@{17}: commit: Update favicon design
+[33mbe2aa10[m HEAD@{18}: commit: Update favicon design
+[33mfb5bd8d[m HEAD@{19}: pull origin main: Fast-forward
+[33mdf194e5[m HEAD@{20}: checkout: moving from fix-env to main
+[33mc3032ed[m[33m ([m[1;31morigin/fix-env[m[33m, [m[1;32mfix-env[m[33m)[m HEAD@{21}: commit: Update favicon design
+[33m94afa7f[m HEAD@{22}: commit: Security: Remove .env from repo
+[33mdf194e5[m HEAD@{23}: checkout: moving from main to fix-env
+[33mdf194e5[m HEAD@{24}: commit: New System of vendors
+[33mac11c63[m HEAD@{25}: commit: Footer of vendors
+[33mabe6ae8[m HEAD@{26}: commit: Fix auth bugs
+[33m57c53be[m HEAD@{27}: commit: chore: remove env file from repo
+[33mb54fbb7[m HEAD@{28}: pull origin main --rebase (finish): returning to refs/heads/main
+[33mb54fbb7[m HEAD@{29}: pull origin main --rebase (pick): feat: vendor context isolation, navigation fixes, auth redirect handling
+[33m6821d03[m HEAD@{30}: pull origin main --rebase (start): checkout 6821d03b0a4162a4b9954cc0db2658d590f01086
+[33m35b94f4[m HEAD@{31}: commit: feat: vendor context isolation, navigation fixes, auth redirect handling
+[33m93fdffa[m HEAD@{32}: commit: Remove sensitive .env file
+[33m47c47d9[m HEAD@{33}: Branch: renamed refs/heads/master to refs/heads/main
+[33m47c47d9[m HEAD@{35}: commit (initial): First upload - Clean project
