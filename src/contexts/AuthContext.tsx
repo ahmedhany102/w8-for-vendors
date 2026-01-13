@@ -259,15 +259,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return true; // Signup was successful, just no auto-login
       }
 
-      // 3. Fetch user profile
-      const userData = await fetchUserProfile(newSession.user.id, newSession.user.email!);
+      // 3. Check if user is banned
+      const { data: canAuth } = await supabase.rpc('can_user_authenticate', {
+        _user_id: newSession.user.id
+      });
 
-      // 4. Update state imperatively
-      setSession(newSession);
-      setUser(userData);
-      setLoading(false);
+      if (canAuth === false) {
+        console.warn('🚫 Banned user detected');
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        setLoading(false);
+        toast.error('تم حظر حسابك. تم تسجيل الخروج تلقائياً');
+        return false;
+      }
 
-      console.log('✅ Signup complete, user state updated:', userData.role);
+      // 4. Fetch user profile
+      try {
+        const userData = await fetchUserProfile(newSession.user.id, newSession.user.email!);
+
+        // 5. Update state imperatively
+        setSession(newSession);
+        setUser(userData);
+        setLoading(false);
+
+        console.log('✅ Signup complete, user state updated:', userData.role);
+      } catch (profileError) {
+        console.warn('⚠️ Could not fetch profile after signup:', profileError);
+        // Still set the session even if profile fetch fails
+        setSession(newSession);
+        setLoading(false);
+      }
+
       return true;
     } catch (error) {
       console.error('❌ Signup error:', error);
