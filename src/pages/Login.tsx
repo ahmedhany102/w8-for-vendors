@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,21 +26,22 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const Login = () => {
   const { login, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Get redirect URL from query params or sessionStorage
+  const redirectParam = searchParams.get('redirect');
 
   // Redirect if already logged in
   React.useEffect(() => {
     if (user && !authLoading) {
       console.log('User already logged in, checking for redirect target');
-      const redirectTarget = sessionStorage.getItem('redirectAfterLogin');
-      if (redirectTarget) {
-        sessionStorage.removeItem('redirectAfterLogin');
-        navigate(redirectTarget);
-      } else {
-        navigate("/");
-      }
+      // Priority: query param > sessionStorage > home
+      const redirectTarget = redirectParam || sessionStorage.getItem('redirectAfterLogin') || '/';
+      sessionStorage.removeItem('redirectAfterLogin');
+      navigate(redirectTarget);
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, redirectParam]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -59,16 +60,13 @@ const Login = () => {
 
       const success = await login(data.email, data.password);
       if (success) {
-        // Check for saved redirect target (e.g., vendor checkout)
-        const redirectTarget = sessionStorage.getItem('redirectAfterLogin');
-        if (redirectTarget) {
-          console.log("Login successful, redirecting to:", redirectTarget);
-          sessionStorage.removeItem('redirectAfterLogin');
-          navigate(redirectTarget);
-        } else {
-          console.log("Login successful, navigating to home");
-          navigate("/");
-        }
+        // Priority: query param > sessionStorage > home
+        const destination = redirectParam || sessionStorage.getItem('redirectAfterLogin') || '/';
+        sessionStorage.removeItem('redirectAfterLogin');
+        console.log("Login successful, hard navigating to:", destination);
+
+        // FORCE hard reload to ensure Auth State is 100% synced
+        window.location.assign(destination);
       }
     } catch (error) {
       console.error('Login submission error:', error);
@@ -165,11 +163,20 @@ const Login = () => {
               </form>
             </Form>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-2 py-4">
+          <CardFooter className="flex flex-col space-y-3 py-4">
             <div className="text-center w-full">
               <span className="text-sm text-muted-foreground">Don't have an account? </span>
               <Link to="/signup" className="text-primary hover:underline font-medium">
                 Sign up
+              </Link>
+            </div>
+            {/* Vendor CTA */}
+            <div className="text-center w-full pt-2 border-t border-border">
+              <Link
+                to="/become-vendor"
+                className="text-sm text-primary hover:underline font-medium flex items-center justify-center gap-1"
+              >
+                احصل علي متجرك الخاص بك الان
               </Link>
             </div>
           </CardFooter>

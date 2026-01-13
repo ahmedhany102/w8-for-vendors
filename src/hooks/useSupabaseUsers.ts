@@ -14,20 +14,42 @@ export const useSupabaseUsers = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+
+      // First, fetch all profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, name, email, role, status, created_at, is_admin, is_super_admin')
         .order('created_at', { ascending: false })
-        .range(0, 49); // Limit to 50 users to reduce egress
+        .range(0, 199); // Increased limit to 200 users
 
-      if (error) {
-        console.error('Error fetching users:', error);
+      if (profilesError) {
+        console.error('Error fetching users:', profilesError);
         toast.error('Failed to load users');
         return;
       }
 
-      console.log('Fetched users:', data);
-      setUsers(data || []);
+      // Fetch all vendor owner_ids with status to identify active vendors
+      const { data: vendors, error: vendorsError } = await supabase
+        .from('vendors')
+        .select('owner_id, status');
+
+      if (vendorsError) {
+        console.error('Error fetching vendors:', vendorsError);
+      }
+
+      // Create a Set of ACTIVE vendor owner_ids for fast lookup
+      const activeVendorUserIds = new Set(
+        vendors?.filter(v => v.status === 'active').map(v => v.owner_id) || []
+      );
+
+      // Add is_vendor flag (true only if store is active)
+      const usersWithVendorFlag = (profiles || []).map(profile => ({
+        ...profile,
+        is_vendor: activeVendorUserIds.has(profile.id)
+      }));
+
+      console.log('Fetched users with vendor info:', usersWithVendorFlag.length);
+      setUsers(usersWithVendorFlag);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to load users');

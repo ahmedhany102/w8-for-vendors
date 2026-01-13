@@ -28,39 +28,39 @@ const UsersPanel = () => {
     email: '',
     password: ''
   });
-  
+
   // Determine if current user is super admin
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  
+
   useEffect(() => {
     const checkSuperAdmin = async () => {
       if (!currentUser?.id) return;
-      
+
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', currentUser.id)
         .eq('role', 'super_admin')
         .maybeSingle();
-      
+
       setIsSuperAdmin(!!data);
     };
-    
+
     checkSuperAdmin();
   }, [currentUser]);
 
   const toggleBanUser = async (userId: string, currentStatus: string) => {
     if (!userId) return;
-    
+
     const newStatus = currentStatus === 'banned' ? 'active' : 'banned';
     const success = await updateUserStatus(userId, newStatus);
-    
+
     if (success) {
       toast.success(`تم ${newStatus === 'banned' ? 'حظر' : 'إلغاء حظر'} المستخدم بنجاح`);
       refetch();
     }
   };
-  
+
   const handleChangeRole = (user: any) => {
     setUserToModify(user);
     // Determine current role from user_roles
@@ -69,12 +69,12 @@ const UsersPanel = () => {
     );
     setShowRoleDialog(true);
   };
-  
+
   const handleSaveRole = async () => {
     if (!userToModify || !selectedRole) return;
-    
+
     const success = await assignUserRole(userToModify.id, selectedRole);
-    
+
     if (success) {
       toast.success('تم تحديث الدور بنجاح');
       setShowRoleDialog(false);
@@ -85,9 +85,9 @@ const UsersPanel = () => {
 
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
-    
+
     const success = await deleteUserAccount(userToDelete.id);
-    
+
     if (success) {
       toast.success('تم حذف المستخدم بنجاح');
       setShowDeleteDialog(false);
@@ -100,12 +100,12 @@ const UsersPanel = () => {
 
   const handleAddAdmin = async (e) => {
     e.preventDefault();
-    
+
     if (!newAdmin.name || !newAdmin.email || !newAdmin.password) {
       toast.error('يرجى تعبئة جميع الحقول');
       return;
     }
-    
+
     try {
       // Create admin user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -127,7 +127,7 @@ const UsersPanel = () => {
       // Assign admin role using secure function
       if (authData.user) {
         const success = await assignUserRole(authData.user.id, 'admin');
-        
+
         if (success) {
           toast.success('تم إنشاء حساب المسؤول بنجاح');
           setShowAddAdminDialog(false);
@@ -135,7 +135,7 @@ const UsersPanel = () => {
           refetch();
         }
       }
-      
+
     } catch (error) {
       console.error('Error creating admin user:', error);
       toast.error('حدث خطأ أثناء إنشاء حساب المسؤول');
@@ -151,7 +151,7 @@ const UsersPanel = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">إدارة المستخدمين</h2>
-        <Button 
+        <Button
           onClick={() => setShowAddAdminDialog(true)}
           className="bg-green-600 hover:bg-green-700"
         >
@@ -159,7 +159,7 @@ const UsersPanel = () => {
           إضافة مسؤول جديد
         </Button>
       </div>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>المستخدمين - Total: {users.length}</CardTitle>
@@ -188,19 +188,36 @@ const UsersPanel = () => {
                 ) : (
                   users.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell>{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
                       <TableCell>
-                        {user.is_super_admin 
-                          ? 'مدير أعلى' 
+                        <div className="flex items-center gap-2">
+                          {user.name}
+                          {user.is_vendor && (
+                            <span className="px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-800 flex items-center gap-1">
+                              🏪 Vendor
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {user.email}
+                          {user.is_vendor && (
+                            <span className="px-1.5 py-0.5 rounded text-xs bg-purple-100 text-purple-800">
+                              Vendor
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {user.is_super_admin
+                          ? 'مدير أعلى'
                           : (user.is_admin ? 'مدير' : 'مستخدم')}
                       </TableCell>
                       <TableCell>
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          user.status === 'banned' 
-                            ? 'bg-red-100 text-red-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
+                        <span className={`px-2 py-1 rounded text-xs ${user.status === 'banned'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-green-100 text-green-800'
+                          }`}>
                           {user.status === 'banned' ? 'محظور' : 'نشط'}
                         </span>
                       </TableCell>
@@ -210,7 +227,7 @@ const UsersPanel = () => {
                             <>
                               {/* Change Role (Super Admin only) */}
                               {isSuperAdmin && (
-                                <Button 
+                                <Button
                                   onClick={() => handleChangeRole(user)}
                                   variant="outline"
                                   size="sm"
@@ -219,9 +236,9 @@ const UsersPanel = () => {
                                   <Shield className="h-4 w-4" />
                                 </Button>
                               )}
-                              
+
                               {/* Ban/Unban */}
-                              <Button 
+                              <Button
                                 onClick={() => toggleBanUser(user.id, user.status)}
                                 variant={user.status === 'banned' ? "outline" : "destructive"}
                                 size="sm"
@@ -233,7 +250,7 @@ const UsersPanel = () => {
                                   <Ban className="h-4 w-4" />
                                 )}
                               </Button>
-                              
+
                               {/* Delete */}
                               <Button
                                 onClick={() => {
@@ -310,7 +327,7 @@ const UsersPanel = () => {
           </form>
         </DialogContent>
       </Dialog>
-      
+
       {/* Change Role Dialog */}
       <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
         <DialogContent className="sm:max-w-[425px]">
@@ -347,7 +364,7 @@ const UsersPanel = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Delete User Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent className="sm:max-w-[425px]">
@@ -358,13 +375,13 @@ const UsersPanel = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              onClick={() => setShowDeleteDialog(false)} 
+            <Button
+              onClick={() => setShowDeleteDialog(false)}
               variant="outline"
             >
               إلغاء
             </Button>
-            <Button 
+            <Button
               onClick={handleDeleteUser}
               variant="destructive"
               className="bg-red-600 hover:bg-red-700"

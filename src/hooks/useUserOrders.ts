@@ -29,7 +29,7 @@ export const useUserOrders = () => {
       // Using a single query instead of two to reduce egress
       const { data: allOrders, error } = await supabase
         .from('orders')
-        .select('id, customer_info, items, status, created_at')
+        .select('id, order_number, total_amount, customer_info, items, status, created_at, notes')
         .or(`customer_info->>user_id.eq.${user.id},customer_info->>email.eq.${user.email}`)
         .order('created_at', { ascending: false })
         .range(0, 19); // Limit to 20 orders per user to reduce egress

@@ -83,9 +83,11 @@ function App() {
                 <Route path="/order-tracking" element={<OrderTracking />} />
                 <Route path="/orders" element={<OrderTracking />} />
                 <Route path="/favorites" element={<Favorites />} />
-                <Route path="/become-vendor" element={<BecomeVendor />} />
                 <Route path="/checkout" element={<Cart />} />
               </Route>
+
+              {/* Become Vendor is PUBLIC - auth handled inside if needed */}
+              <Route path="/become-vendor" element={<BecomeVendor />} />
 
               {/* Cart is PUBLIC - checkout auth is handled inside Cart.tsx */}
               <Route path="/cart" element={<Cart />} />

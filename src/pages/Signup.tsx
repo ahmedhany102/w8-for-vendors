@@ -1,7 +1,8 @@
 
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Layout from "@/components/Layout";
+import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,22 +52,22 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 const Signup = () => {
   const { signup, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
 
+  // Get redirect URL from query params
+  const redirectParam = searchParams.get('redirect');
+
   React.useEffect(() => {
-    if (user && !authLoading) {
-      // Check for saved redirect target
-      const redirectTarget = sessionStorage.getItem('redirectAfterLogin');
-      if (redirectTarget) {
-        sessionStorage.removeItem('redirectAfterLogin');
-        navigate(redirectTarget);
-      } else {
-        navigate("/");
-      }
+    if (user && !authLoading && !isSubmitting) {
+      // Priority: query param > sessionStorage > home
+      const redirectTarget = redirectParam || sessionStorage.getItem('redirectAfterLogin') || '/';
+      sessionStorage.removeItem('redirectAfterLogin');
+      navigate(redirectTarget);
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, redirectParam, isSubmitting]);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -82,16 +84,44 @@ const Signup = () => {
 
     setIsSubmitting(true);
     try {
-      const success = await signup(data.email, data.password, data.name);
-      if (success) {
+      console.log('📝 Attempting signup for:', data.email);
+
+      // Call supabase directly to get session
+      const { data: signupData, error } = await supabase.auth.signUp({
+        email: data.email.toLowerCase().trim(),
+        password: data.password,
+        options: {
+          data: { name: data.name.trim() }
+        }
+      });
+
+      if (error) {
+        console.error('❌ Signup error:', error);
+        toast.error(error.message || 'Signup failed');
+        return;
+      }
+
+      // Check if session exists (email confirmation is disabled)
+      if (signupData.session) {
+        console.log('✅ Signup successful with session, auto-login active');
+        toast.success('Account created successfully!');
+
+        // CRITICAL FIX: Wait 500ms for AuthContext to update global state
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Navigate to destination
+        const destination = redirectParam || '/';
+        console.log('🚀 Navigating to:', destination);
+        navigate(destination, { replace: true });
+      } else if (signupData.user && !signupData.session) {
+        // Email confirmation is enabled - show message
+        console.log('📧 Signup successful but email confirmation required');
+        toast.info('Please check your email to confirm your account.');
         setSignupSuccess(true);
-        // Don't navigate immediately, let user see the success message
-        setTimeout(() => {
-          navigate("/login");
-        }, 3000);
       }
     } catch (error) {
       console.error('Signup submission error:', error);
+      toast.error('Signup failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

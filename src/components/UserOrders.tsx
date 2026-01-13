@@ -56,114 +56,129 @@ const UserOrders = () => {
     order.status?.toUpperCase() === 'CANCELLED'
   );
 
-  const renderOrderCard = (order: any) => (
-    <Card key={order.id} className="border border-gray-200">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg">Order #{order.order_number}</CardTitle>
-            <p className="text-sm text-gray-600">
-              Placed on {format(new Date(order.created_at), 'PPP')}
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="flex items-center gap-2 mb-1">
-              <Badge className={getStatusColor(order.status)}>
-                {order.status}
-              </Badge>
-              {canCancelOrder(order) && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={cancelling === order.id}
-                      className="h-6 px-2 text-xs"
-                    >
-                      <X className="h-3 w-3 mr-1" />
-                      {cancelling === order.id ? 'Cancelling...' : 'Cancel'}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Cancel Order</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to cancel order #{order.order_number}? This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Keep Order</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleCancelOrder(order.id)}>
-                        Yes, Cancel Order
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-            </div>
-            <p className="text-lg font-semibold">
-              ${Number(order.total_amount ?? 0).toFixed(2)}
-            </p>
-          </div>
-        </div>
-      </CardHeader>
+  const renderOrderCard = (order: any) => {
+    // Calculate total from items if total_amount is missing
+    const calculateItemsTotal = () => {
+      if (!Array.isArray(order.items)) return 0;
+      return order.items.reduce((sum: number, item: any) => {
+        const price = item.totalPrice || item.price || 0;
+        const qty = item.quantity || 1;
+        return sum + (item.totalPrice ? price : price * qty);
+      }, 0);
+    };
 
-      <CardContent>
-        <div className="space-y-3">
-          {/* Order Items */}
-          <div>
-            <h4 className="font-medium mb-2">Items:</h4>
-            <div className="space-y-2">
-              {Array.isArray(order.items) && order.items.map((item, index) => (
-                <div key={index} className="flex justify-between items-center text-sm">
-                  <div className="flex items-center space-x-3">
-                    {item.imageUrl && (
-                      <img
-                        src={item.imageUrl}
-                        alt={item.productName}
-                        className="w-10 h-10 object-cover rounded"
-                      />
-                    )}
-                    <div>
-                      <p className="font-medium">{item.productName}</p>
-                      {item.color && item.color !== '-' && (
-                        <p className="text-gray-500">Color: {item.color}</p>
-                      )}
-                      {item.size && item.size !== '-' && (
-                        <p className="text-gray-500">Size: {item.size}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p>Qty: {item.quantity}</p>
-                    <p className="font-medium">${Number(item.totalPrice ?? 0).toFixed(2)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+    const displayTotal = order.total_amount || calculateItemsTotal();
+    const orderNumber = order.order_number || order.id?.slice(0, 8) || 'N/A';
 
-          {/* Shipping Address */}
-          {order.customer_info?.address && (
+    return (
+      <Card key={order.id} className="border border-gray-200">
+        <CardHeader className="pb-3">
+          <div className="flex justify-between items-start">
             <div>
-              <h4 className="font-medium mb-1">Shipping Address:</h4>
+              <CardTitle className="text-lg">Order #{orderNumber}</CardTitle>
               <p className="text-sm text-gray-600">
-                {order.customer_info.address.street}, {order.customer_info.address.city}, {order.customer_info.address.zipCode}
+                Placed on {format(new Date(order.created_at), 'PPP')}
               </p>
             </div>
-          )}
-
-          {/* Order Notes */}
-          {order.notes && (
-            <div>
-              <h4 className="font-medium mb-1">Notes:</h4>
-              <p className="text-sm text-gray-600">{order.notes}</p>
+            <div className="text-right">
+              <div className="flex items-center gap-2 mb-1">
+                <Badge className={getStatusColor(order.status)}>
+                  {order.status}
+                </Badge>
+                {canCancelOrder(order) && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={cancelling === order.id}
+                        className="h-6 px-2 text-xs"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        {cancelling === order.id ? 'Cancelling...' : 'Cancel'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Cancel Order</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to cancel order #{orderNumber}? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Keep Order</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleCancelOrder(order.id)}>
+                          Yes, Cancel Order
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
+              <p className="text-lg font-semibold">
+                {Number(displayTotal).toFixed(0)} ج.م
+              </p>
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <div className="space-y-3">
+            {/* Order Items */}
+            <div>
+              <h4 className="font-medium mb-2">Items:</h4>
+              <div className="space-y-2">
+                {Array.isArray(order.items) && order.items.map((item, index) => (
+                  <div key={index} className="flex justify-between items-center text-sm">
+                    <div className="flex items-center space-x-3">
+                      {item.imageUrl && (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.productName}
+                          className="w-10 h-10 object-cover rounded"
+                        />
+                      )}
+                      <div>
+                        <p className="font-medium">{item.productName}</p>
+                        {item.color && item.color !== '-' && (
+                          <p className="text-gray-500">Color: {item.color}</p>
+                        )}
+                        {item.size && item.size !== '-' && (
+                          <p className="text-gray-500">Size: {item.size}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p>Qty: {item.quantity}</p>
+                      <p className="font-medium">${Number(item.totalPrice ?? 0).toFixed(2)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Shipping Address */}
+            {order.customer_info?.address && (
+              <div>
+                <h4 className="font-medium mb-1">Shipping Address:</h4>
+                <p className="text-sm text-gray-600">
+                  {order.customer_info.address.street}, {order.customer_info.address.city}, {order.customer_info.address.zipCode}
+                </p>
+              </div>
+            )}
+
+            {/* Order Notes */}
+            {order.notes && (
+              <div>
+                <h4 className="font-medium mb-1">Notes:</h4>
+                <p className="text-sm text-gray-600">{order.notes}</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-4">

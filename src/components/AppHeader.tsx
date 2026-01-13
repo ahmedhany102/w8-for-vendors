@@ -12,11 +12,11 @@ const AppHeader = () => {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Check if currently on an admin or vendor page
   const isAdminPage = location.pathname.includes('/admin');
   const isVendorPage = location.pathname.includes('/vendor');
-  
+
   // Super admins and admins should not see vendor UI
   const isSuperAdminOrAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
 
@@ -73,13 +73,13 @@ const AppHeader = () => {
                   <Moon className="h-4 w-4" />
                 )}
               </Button>
-              
+
               {user ? (
                 <div className="flex items-center gap-3">
                   <div className="text-sm text-muted-foreground">
                     {user.name} {getRoleBadge()}
                   </div>
-                  
+
                   {/* Show admin dashboard link for admins */}
                   {isSuperAdminOrAdmin && !isAdminPage && (
                     <Link to="/admin">
@@ -89,7 +89,7 @@ const AppHeader = () => {
                       </Button>
                     </Link>
                   )}
-                  
+
                   {/* Show vendor dashboard link for vendors (NOT for admins) */}
                   {isVendor && !isSuperAdminOrAdmin && !isAdminPage && !isVendorPage && (
                     <Link to="/vendor">
@@ -109,10 +109,10 @@ const AppHeader = () => {
                       </Button>
                     </Link>
                   )}
-                  
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={isAdminPage ? handleAdminLogout : handleLogout}
                     className="flex items-center gap-1"
                   >
@@ -125,8 +125,17 @@ const AppHeader = () => {
                   <div className="text-sm text-muted-foreground mr-2">
                     Welcome, Guest
                   </div>
-                  <Link to="/login" className="text-sm text-foreground hover:text-primary mr-2">
-                    Login
+                  {/* Sell With Us CTA - Always visible for guests */}
+                  <Link to="/become-vendor">
+                    <Button variant="outline" size="sm" className="flex items-center gap-1 text-primary border-primary hover:bg-primary/10">
+                      <Store className="h-3.5 w-3.5" />
+                      <span className="text-xs">Sell with us</span>
+                    </Button>
+                  </Link>
+                  <Link to="/login">
+                    <Button variant="default" size="sm" className="text-xs">
+                      Login
+                    </Button>
                   </Link>
                 </div>
               )}

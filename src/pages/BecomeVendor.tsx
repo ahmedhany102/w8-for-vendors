@@ -20,7 +20,7 @@ const BecomeVendor = () => {
     return <Navigate to="/vendor" replace />;
   }
 
-  if (authLoading || profileLoading) {
+  if (authLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -30,9 +30,67 @@ const BecomeVendor = () => {
     );
   }
 
-  // Not logged in
+  // Guest user - show info page with signup CTA
   if (!user) {
-    return <Navigate to="/login" state={{ from: { pathname: '/become-vendor' } }} replace />;
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-2xl mx-auto text-center mb-8">
+            <Store className="w-16 h-16 mx-auto mb-4 text-primary" />
+            <h1 className="text-3xl font-bold mb-4">انضم كبائع</h1>
+            <p className="text-muted-foreground mb-6">
+              ابدأ رحلتك معنا وقم ببيع منتجاتك لآلاف العملاء. سجل حساب جديد أو قم بتسجيل الدخول للتقديم كبائع.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" onClick={() => navigate('/signup?redirect=/become-vendor')}>
+                إنشاء حساب جديد
+              </Button>
+              <Button variant="outline" size="lg" onClick={() => navigate('/login?redirect=/become-vendor')}>
+                تسجيل الدخول
+              </Button>
+            </div>
+          </div>
+
+          {/* Benefits section for guests */}
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle className="text-center">لماذا تنضم إلينا؟</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3 text-right">
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <span>الوصول إلى آلاف العملاء المحتملين</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <span>لوحة تحكم سهلة لإدارة منتجاتك</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <span>دعم فني متواصل</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <span>عمولات تنافسية</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Loading vendor profile for logged-in users
+  if (profileLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
   }
 
   const handleApply = async (storeName: string, storeDescription?: string, phone?: string, address?: string) => {
