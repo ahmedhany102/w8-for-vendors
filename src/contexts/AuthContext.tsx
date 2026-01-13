@@ -25,7 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // هنا بنستخدم setLoading من الـ hook عشان نتحكم في حالة التحميل المركزية
   const { validateSessionAndUser, loading, setLoading } = useAuthValidation();
-  const { login: baseLogin, adminLogin: baseAdminLogin, signup, logout: baseLogout } = useAuthOperations();
+  const { login: baseLogin, adminLogin: baseAdminLogin, signup: baseSignup, logout: baseLogout } = useAuthOperations();
 
   const checkAuthStatus = useCallback(async () => {
     await validateSessionAndUser(setSession, setUser);
@@ -252,6 +252,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(null);
     }
   }, [baseLogout]);
+
+  // Imperative signup function that manually fetches and updates state after successful signup
+  const signup = useCallback(async (email: string, password: string, name: string): Promise<boolean> => {
+    setLoading(true);
+    
+    try {
+      // 1. Attempt Supabase signup
+      const success = await baseSignup(email, password, name);
+      if (!success) {
+        setLoading(false);
+        return false;
+      }
+
+      // 2. Immediately fetch session manually (don't wait for onAuthStateChange)
+      // Note: Session may be null if email confirmation is required
+      console.log('📝 Signup successful, fetching session manually...');
+      const { data: { session: newSession }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('❌ Failed to get session after signup:', sessionError);
+        setLoading(false);
+        // Still return true since signup succeeded (user may need to confirm email)
+        return true;
+      }
+
+      // If no session (email confirmation required), just return success
+      if (!newSession || !newSession.user) {
+        console.log('📧 No session after signup - email confirmation may be required');
+        setLoading(false);
+        return true;
+      }
+
+      // 3. Session exists, so user is auto-logged in - update state
+      console.log('🔐 User auto-logged in after signup, updating state...');
+      
+      // 4. Fetch user profile
+      const userData = await fetchUserProfile(newSession.user.id, newSession.user.email!);
+      
+      // 5. Update state imperatively
+      setSession(newSession);
+      setUser(userData);
+      setLoading(false);
+      
+      console.log('✅ Signup complete, user state updated:', userData.role);
+      return true;
+    } catch (error) {
+      console.error('❌ Signup error:', error);
+      setLoading(false);
+      return false;
+    }
+  }, [baseSignup, setLoading]);
 
   const contextValue: AuthContextType = {
     user,
