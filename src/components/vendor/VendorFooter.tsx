@@ -53,6 +53,18 @@ const VendorFooter: React.FC = () => {
     const hasQuickLinks = settings?.show_home_link || settings?.show_cart_link ||
         settings?.show_profile_link || settings?.show_orders_link;
 
+    // Helper function to ensure URLs have HTTPS protocol
+    const ensureHttps = (url: string | null | undefined): string => {
+        if (!url || url.trim() === '') return '#';
+        const trimmed = url.trim();
+        if (trimmed.startsWith('https://')) return trimmed;
+        if (trimmed.startsWith('http://')) return trimmed.replace('http://', 'https://');
+        if (trimmed.startsWith('www.') || !trimmed.includes('://')) {
+            return `https://${trimmed}`;
+        }
+        return trimmed;
+    };
+
     return (
         <footer className="bg-muted/50 border-t mt-8 pb-20 md:pb-16">
             <div className="container mx-auto px-4 py-8">
@@ -103,7 +115,7 @@ const VendorFooter: React.FC = () => {
                     <div className="flex justify-center gap-4 mb-6">
                         {settings?.whatsapp_link && (
                             <a
-                                href={settings.whatsapp_link}
+                                href={ensureHttps(settings.whatsapp_link)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="p-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors"
@@ -114,7 +126,7 @@ const VendorFooter: React.FC = () => {
                         )}
                         {settings?.facebook_link && (
                             <a
-                                href={settings.facebook_link}
+                                href={ensureHttps(settings.facebook_link)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
@@ -125,7 +137,7 @@ const VendorFooter: React.FC = () => {
                         )}
                         {settings?.instagram_link && (
                             <a
-                                href={settings.instagram_link}
+                                href={ensureHttps(settings.instagram_link)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="p-2 rounded-full bg-gradient-to-tr from-purple-600 via-pink-500 to-orange-400 text-white hover:opacity-90 transition-opacity"

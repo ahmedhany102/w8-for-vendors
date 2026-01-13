@@ -22,6 +22,18 @@ const Footer = () => {
 
   const currentSettings = settings || defaultSettings;
 
+  // Helper function to ensure URLs have HTTPS protocol
+  const ensureHttps = (url: string | null | undefined): string => {
+    if (!url || url.trim() === '') return '#';
+    const trimmed = url.trim();
+    if (trimmed.startsWith('https://')) return trimmed;
+    if (trimmed.startsWith('http://')) return trimmed.replace('http://', 'https://');
+    if (trimmed.startsWith('www.') || !trimmed.includes('://')) {
+      return `https://${trimmed}`;
+    }
+    return trimmed;
+  };
+
   if (loading) {
     return (
       <footer className="bg-background border-t border-border pt-6 pb-3 mt-auto">
@@ -47,7 +59,7 @@ const Footer = () => {
             <div className="flex space-x-3 rtl:space-x-reverse">
               {currentSettings.facebook && (
                 <a
-                  href={currentSettings.facebook}
+                  href={ensureHttps(currentSettings.facebook)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-foreground hover:text-blue-400"
@@ -57,7 +69,7 @@ const Footer = () => {
               )}
               {currentSettings.instagram && (
                 <a
-                  href={currentSettings.instagram}
+                  href={ensureHttps(currentSettings.instagram)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-foreground hover:text-pink-400"
@@ -93,7 +105,7 @@ const Footer = () => {
               <span className="text-foreground font-semibold text-lg">
                 Dev:{' '}
                 <a
-                  href={currentSettings.developer_url}
+                  href={ensureHttps(currentSettings.developer_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-pink-400 transition-all duration-300"
@@ -105,7 +117,7 @@ const Footer = () => {
 
             <div className="mt-1">
               <span className="text-muted-foreground text-sm">
-             
+
               </span>
             </div>
           </div>
