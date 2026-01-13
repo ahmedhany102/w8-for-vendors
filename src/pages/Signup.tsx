@@ -86,34 +86,32 @@ const Signup = () => {
     try {
       console.log('📝 Attempting signup for:', data.email);
 
-      // Call supabase directly to get session
-      const { data: signupData, error } = await supabase.auth.signUp({
-        email: data.email.toLowerCase().trim(),
-        password: data.password,
-        options: {
-          data: { name: data.name.trim() }
-        }
-      });
+      // Use AuthContext signup function (implements imperative state injection)
+      const success = await signup(data.email, data.password, data.name);
 
-      if (error) {
-        console.error('❌ Signup error:', error);
-        toast.error(error.message || 'Signup failed');
+      if (!success) {
+        console.error('❌ Signup failed');
+        // Error toast is already shown by the signup function
         return;
       }
 
-      // Check if session exists (email confirmation is disabled)
-      if (signupData.session) {
+      // Check if session exists (auto-login is enabled)
+      // We need this check to determine navigation vs. email confirmation UI
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (currentSession) {
         console.log('✅ Signup successful with session, auto-login active');
-        toast.success('Account created successfully!');
-
-        // CRITICAL FIX: Wait 500ms for AuthContext to update global state
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Success toast is already shown by the secureSignup function
+        
+        // Brief delay allows React state updates from context to propagate
+        // Context updates state imperatively, but React updates are still async
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         // Navigate to destination
         const destination = redirectParam || '/';
         console.log('🚀 Navigating to:', destination);
         navigate(destination, { replace: true });
-      } else if (signupData.user && !signupData.session) {
+      } else {
         // Email confirmation is enabled - show message
         console.log('📧 Signup successful but email confirmation required');
         toast.info('Please check your email to confirm your account.');
