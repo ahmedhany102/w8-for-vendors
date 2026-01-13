@@ -96,14 +96,16 @@ const Signup = () => {
       }
 
       // Check if session exists (auto-login is enabled)
+      // We need this check to determine navigation vs. email confirmation UI
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       
       if (currentSession) {
         console.log('✅ Signup successful with session, auto-login active');
-        // Success toast is already shown by the signup function
+        // Success toast is already shown by the secureSignup function
         
-        // Wait briefly for state propagation (100-150ms)
-        await new Promise(resolve => setTimeout(resolve, 150));
+        // Brief delay allows React state updates from context to propagate
+        // Context updates state imperatively, but React updates are still async
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         // Navigate to destination
         const destination = redirectParam || '/';
