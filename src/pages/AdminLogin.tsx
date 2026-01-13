@@ -31,8 +31,8 @@ const AdminLogin = () => {
   // Redirect if already logged in as admin
   React.useEffect(() => {
     if (user && !authLoading) {
-      console.log('User already logged in, checking admin status...');
-      if (user.role === 'ADMIN') {
+      console.log('User already logged in, checking admin status...', user.role);
+      if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
         console.log('Admin user detected, redirecting to admin dashboard');
         navigate("/admin");
       } else {
@@ -58,9 +58,12 @@ const AdminLogin = () => {
       console.log("Attempting admin login");
       
       const success = await adminLogin(data.email, data.password);
-      if (success) {
-        console.log("Admin login successful, navigating to admin dashboard");
-        navigate("/admin");
+      console.log("Admin login result:", success);
+      
+      // Don't navigate here - let the useEffect handle navigation when user state updates
+      // This ensures navigation happens AFTER React has actually updated the state
+      if (!success) {
+        console.log("Admin login failed");
       }
     } catch (error) {
       console.error('Admin login submission error:', error);

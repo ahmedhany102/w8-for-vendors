@@ -58,17 +58,13 @@ const Login = () => {
       console.log("Attempting login for:", data.email);
 
       const success = await login(data.email, data.password);
-      if (success) {
-        // Check for saved redirect target (e.g., vendor checkout)
-        const redirectTarget = sessionStorage.getItem('redirectAfterLogin');
-        if (redirectTarget) {
-          console.log("Login successful, redirecting to:", redirectTarget);
-          sessionStorage.removeItem('redirectAfterLogin');
-          navigate(redirectTarget);
-        } else {
-          console.log("Login successful, navigating to home");
-          navigate("/");
-        }
+      console.log("Login result:", success);
+      
+      // Don't navigate here - let the useEffect handle navigation when user state updates
+      // This ensures navigation happens AFTER React has actually updated the state
+      if (!success) {
+        // Only show error if login failed - success navigation is handled by useEffect
+        console.log("Login failed");
       }
     } catch (error) {
       console.error('Login submission error:', error);

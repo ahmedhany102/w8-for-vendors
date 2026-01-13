@@ -85,9 +85,15 @@ const Signup = () => {
       const success = await signup(data.email, data.password, data.name);
       if (success) {
         setSignupSuccess(true);
-        // Don't navigate immediately, let user see the success message
+        // If user gets auto-logged in, the useEffect will handle navigation
+        // Otherwise (email confirmation required), show success message and redirect to login
+        // Check after a short delay if user was auto-logged in
         setTimeout(() => {
-          navigate("/login");
+          // Only navigate to login if user wasn't auto-logged in
+          // (the useEffect will have already navigated if they were)
+          if (!user) {
+            navigate("/login");
+          }
         }, 3000);
       }
     } catch (error) {
