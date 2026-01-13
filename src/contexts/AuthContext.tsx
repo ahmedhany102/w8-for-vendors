@@ -25,7 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // هنا بنستخدم setLoading من الـ hook عشان نتحكم في حالة التحميل المركزية
   const { validateSessionAndUser, loading, setLoading } = useAuthValidation();
-  const { login: baseLogin, adminLogin: baseAdminLogin, signup, logout: baseLogout } = useAuthOperations();
+  const { login: baseLogin, adminLogin: baseAdminLogin, signup: baseSignup, logout: baseLogout } = useAuthOperations();
 
   const checkAuthStatus = useCallback(async () => {
     await validateSessionAndUser(setSession, setUser);
@@ -235,6 +235,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     }
   }, [baseAdminLogin, setLoading]);
+
+  // Imperative signup function that manually fetches and updates state after successful signup
+  const signup = useCallback(async (email: string, password: string, name: string): Promise<boolean> => {
+    setLoading(true);
+
+    try {
+      // 1. Attempt Supabase signup
+      const success = await baseSignup(email, password, name);
+      if (!success) {
+        setLoading(false);
+        return false;
+      }
+
+      // 2. Immediately fetch session manually (don't wait for onAuthStateChange)
+      console.log('📝 Signup successful, fetching session manually...');
+      const { data: { session: newSession }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError || !newSession || !newSession.user) {
+        // This is expected if email confirmation is required
+        console.log('ℹ️ No session after signup - email confirmation may be required');
+        setLoading(false);
+        return true; // Signup was successful, just no auto-login
+      }
+
+      // 3. Fetch user profile
+      const userData = await fetchUserProfile(newSession.user.id, newSession.user.email!);
+
+      // 4. Update state imperatively
+      setSession(newSession);
+      setUser(userData);
+      setLoading(false);
+
+      console.log('✅ Signup complete, user state updated:', userData.role);
+      return true;
+    } catch (error) {
+      console.error('❌ Signup error:', error);
+      setLoading(false);
+      return false;
+    }
+  }, [baseSignup, setLoading]);
 
   // Imperative logout function that manually clears state after logout
   const logout = useCallback(async (): Promise<void> => {
