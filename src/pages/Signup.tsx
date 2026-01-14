@@ -129,34 +129,39 @@ const Signup = () => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col lg:flex-row overflow-hidden">
+    <div className="min-h-screen w-full flex flex-col md:flex-row bg-white">
       {/* Left Column - Brand Experience */}
-      <div className="lg:w-1/2 bg-gradient-to-br from-[#fffbf0] to-[#ffdcb0] relative flex-shrink-0">
+      <div className="w-full md:w-1/2 md:h-screen bg-gradient-to-br from-[#fffbf0] to-[#ffdcb0] flex-shrink-0 relative">
         {/* Content */}
-        <div className="flex flex-col items-center justify-center h-full p-6 lg:p-12 text-center">
-          {/* Logo */}
-          <Link to="/" className="mb-4 lg:mb-6">
+        <div className="flex flex-col items-center justify-center py-12 md:py-0 md:h-full px-4 md:p-12 text-center">
+          {/* Logo - Smaller on mobile */}
+          <Link to="/" className="mb-2 md:mb-6">
             <img
               src="/logo.png"
               alt="Sarraly"
-              className="h-14 lg:h-20 object-contain"
+              className="h-10 md:h-20 object-contain"
             />
           </Link>
 
-          {/* Brand Name */}
-          <h1 className="text-2xl lg:text-4xl font-bold text-orange-900 mb-2 lg:mb-4" style={{ fontFamily: 'Cairo, sans-serif' }}>
+          {/* Brand Name - Smaller on mobile */}
+          <h1 className="text-xl md:text-4xl font-bold text-orange-900 mb-1 md:mb-4" style={{ fontFamily: 'Cairo, sans-serif' }}>
             سرعلي
           </h1>
 
-          {/* Tagline */}
-          <p className="text-base lg:text-xl text-orange-800/90 max-w-md leading-relaxed font-medium" style={{ fontFamily: 'Cairo, sans-serif' }}>
+          {/* Mobile Slogan - Only visible on mobile */}
+          <p className="md:hidden text-sm text-orange-800 font-medium mt-1 mb-2" style={{ fontFamily: 'Cairo, sans-serif' }}>
+            امتلك متجرك الإلكتروني الخاص بك في ثوانٍ
+          </p>
+
+          {/* Tagline - Hidden on mobile */}
+          <p className="hidden md:block text-xl text-orange-800/90 max-w-md leading-relaxed font-medium" style={{ fontFamily: 'Cairo, sans-serif' }}>
             ابدأ رحلتك في عالم التجارة الإلكترونية
             <br />
-            <span className="text-orange-700/70 text-sm lg:text-lg">في ثوانٍ معدودة</span>
+            <span className="text-orange-700/70 text-lg">في ثوانٍ معدودة</span>
           </p>
 
           {/* Feature badges - hidden on mobile */}
-          <div className="hidden lg:flex flex-wrap justify-center gap-3 mt-6">
+          <div className="hidden md:flex flex-wrap justify-center gap-3 mt-6">
             <span className="bg-white/50 text-orange-900 px-4 py-1.5 rounded-full text-sm font-medium">
               تسجيل مجاني
             </span>
@@ -171,7 +176,7 @@ const Signup = () => {
       </div>
 
       {/* Right Column - Form */}
-      <div className="lg:w-1/2 flex items-center justify-center p-4 lg:p-6 bg-white flex-1 overflow-y-auto">
+      <div className="w-full md:w-1/2 md:h-screen flex items-center justify-center p-4 pb-8 md:p-8 bg-white">
         <div className="w-full max-w-md">
           <Card className="shadow-xl border-0 rounded-2xl overflow-hidden">
             <CardHeader className="text-center pb-2 pt-5">
