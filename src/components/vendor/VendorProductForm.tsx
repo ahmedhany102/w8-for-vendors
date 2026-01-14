@@ -26,6 +26,7 @@ interface ColorVariant {
   id?: string;
   color: string;
   image: string | null;
+  gallery_urls: string[]; // Additional gallery images for this variant
   options: Array<{
     id?: string;
     size: string;

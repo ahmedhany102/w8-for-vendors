@@ -13,6 +13,7 @@ export interface ProductVariant {
   id?: string;
   color: string;
   image: string | null;
+  gallery_urls: string[]; // Additional gallery images for this variant
   options: ProductVariantOption[];
 }
 
@@ -46,7 +47,8 @@ export class ProductVariantService {
           .insert({
             product_id: productId,
             color: variant.color.trim(),
-            image: variant.image
+            image: variant.image,
+            gallery_urls: variant.gallery_urls || []
           })
           .select('id')
           .single();
@@ -59,7 +61,7 @@ export class ProductVariantService {
         console.log('✅ Color variant created:', colorVariant.id);
 
         // Insert options for this color variant
-        const validOptions = variant.options.filter(opt => 
+        const validOptions = variant.options.filter(opt =>
           opt.size.trim() && opt.price > 0 && opt.stock >= 0
         );
 
@@ -132,6 +134,7 @@ export class ProductVariantService {
         id: variant.id,
         color: variant.color,
         image: variant.image,
+        gallery_urls: variant.gallery_urls || [],
         options: (options || [])
           .filter(opt => opt.color_variant_id === variant.id)
           .map(opt => ({

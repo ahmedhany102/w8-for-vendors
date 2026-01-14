@@ -12,6 +12,7 @@ export interface ColorVariantWithOptions {
   color_variant_id: string;
   color: string;
   image: string | null;
+  gallery_urls: string[]; // Additional gallery images
   options: VariantOption[];
 }
 
@@ -27,7 +28,7 @@ export const useProductVariantsWithOptions = (productId: string) => {
 
     try {
       setLoading(true);
-      
+
       const { data, error } = await supabase.rpc('get_product_variant_options', {
         p_product_id: productId
       });
@@ -40,19 +41,20 @@ export const useProductVariantsWithOptions = (productId: string) => {
 
       // Group by color_variant_id
       const variantMap = new Map<string, ColorVariantWithOptions>();
-      
+
       for (const row of (data || [])) {
         const variantId = row.color_variant_id;
-        
+
         if (!variantMap.has(variantId)) {
           variantMap.set(variantId, {
             color_variant_id: variantId,
             color: row.color,
             image: row.image,
+            gallery_urls: row.gallery_urls || [],
             options: []
           });
         }
-        
+
         // Add option if it exists
         if (row.option_id) {
           variantMap.get(variantId)!.options.push({

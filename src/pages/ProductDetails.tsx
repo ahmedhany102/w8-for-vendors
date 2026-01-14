@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
-import { Plus, Minus, ShoppingCart, Loader2, Store, Sparkles } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Loader2, Store, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { formatProductForDisplay } from '@/utils/productUtils';
@@ -49,6 +49,7 @@ interface VariantSelection {
   price: number;
   stock: number;
   image: string | null;
+  galleryUrls: string[];
 }
 
 const ProductDetails = () => {
@@ -64,13 +65,19 @@ const ProductDetails = () => {
   const [hasVariants, setHasVariants] = useState(false);
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState<string | null>(null);
+
+  // Dynamic gallery for variant-specific images
+  const [currentGallery, setCurrentGallery] = useState<string[]>([]);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+
   const [variantSelection, setVariantSelection] = useState<VariantSelection>({
     colorVariantId: null,
     color: null,
     size: null,
     price: 0,
     stock: 0,
-    image: null
+    image: null,
+    galleryUrls: []
   });
 
   // Check if user came from a vendor store
@@ -181,10 +188,49 @@ const ProductDetails = () => {
 
   const handleVariantSelectionChange = useCallback((selection: VariantSelection) => {
     setVariantSelection(selection);
-    if (selection.image) {
+
+    // Update gallery based on variant selection
+    if (selection.galleryUrls && selection.galleryUrls.length > 0) {
+      // Use variant-specific gallery
+      setCurrentGallery(selection.galleryUrls);
+      setGalleryIndex(0);
+      setActiveImage(selection.galleryUrls[0]);
+    } else if (selection.image) {
+      // Fall back to single variant image + product images
+      const combined = [selection.image, ...(product?.images || []).filter(img => img !== selection.image)];
+      setCurrentGallery(combined);
+      setGalleryIndex(0);
       setActiveImage(selection.image);
     }
-  }, []);
+  }, [product?.images]);
+
+  // Initialize gallery when product loads
+  useEffect(() => {
+    if (product) {
+      const initialGallery = product.images && product.images.length > 0
+        ? product.images
+        : (product.main_image ? [product.main_image] : []);
+      setCurrentGallery(initialGallery);
+      if (initialGallery.length > 0) {
+        setActiveImage(initialGallery[0]);
+      }
+    }
+  }, [product]);
+
+  // Gallery navigation
+  const goToPrevImage = () => {
+    if (currentGallery.length <= 1) return;
+    const newIndex = galleryIndex === 0 ? currentGallery.length - 1 : galleryIndex - 1;
+    setGalleryIndex(newIndex);
+    setActiveImage(currentGallery[newIndex]);
+  };
+
+  const goToNextImage = () => {
+    if (currentGallery.length <= 1) return;
+    const newIndex = galleryIndex === currentGallery.length - 1 ? 0 : galleryIndex + 1;
+    setGalleryIndex(newIndex);
+    setActiveImage(currentGallery[newIndex]);
+  };
 
   const handleImageClick = (imageUrl: string) => {
     setActiveImage(imageUrl);
@@ -358,7 +404,7 @@ const ProductDetails = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Product Images */}
           <div>
-            <div className="mb-4 border rounded overflow-hidden">
+            <div className="mb-4 border rounded overflow-hidden relative">
               <AspectRatio ratio={1}>
                 <img
                   src={activeImage}
@@ -369,16 +415,43 @@ const ProductDetails = () => {
                   }}
                 />
               </AspectRatio>
+
+              {/* Navigation Arrows */}
+              {currentGallery.length > 1 && (
+                <>
+                  <button
+                    onClick={goToPrevImage}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition-all"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={goToNextImage}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition-all"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+
+                  {/* Image Counter */}
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                    {galleryIndex + 1} / {currentGallery.length}
+                  </div>
+                </>
+              )}
             </div>
 
-            {product.images && product.images.length > 0 && (
+            {/* Thumbnail Gallery */}
+            {currentGallery.length > 0 && (
               <div className="flex overflow-x-auto gap-2 pb-2">
-                {product.images.map((image, index) => (
+                {currentGallery.map((image, index) => (
                   <div
                     key={index}
-                    className={`border rounded cursor-pointer flex-shrink-0 w-16 h-16 overflow-hidden ${activeImage === image ? 'ring-2 ring-primary' : ''
+                    className={`border rounded cursor-pointer flex-shrink-0 w-16 h-16 overflow-hidden ${galleryIndex === index ? 'ring-2 ring-primary' : ''
                       }`}
-                    onClick={() => handleImageClick(image)}
+                    onClick={() => {
+                      setGalleryIndex(index);
+                      setActiveImage(image);
+                    }}
                   >
                     <img
                       src={image}
@@ -478,10 +551,12 @@ const ProductDetails = () => {
                 <span className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" /> جاري الإضافة...
                 </span>
-              ) : isOutOfStock ? (
+              ) : !hasVariants && isOutOfStock ? (
                 'نفذت الكمية'
-              ) : !canAddToCart ? (
-                'يرجى اختيار اللون والمقاس'
+              ) : hasVariants && !variantSelection.size ? (
+                'يجب اختيار مقاس ولون'
+              ) : hasVariants && variantSelection.stock === 0 ? (
+                'هذا الخيار غير متاح'
               ) : (
                 <span className="flex items-center gap-2">
                   <ShoppingCart className="h-4 w-4" /> إضافة إلى العربة

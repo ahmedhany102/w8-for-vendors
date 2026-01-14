@@ -12,6 +12,7 @@ interface ProductVariantSelectorV2Props {
     price: number;
     stock: number;
     image: string | null;
+    galleryUrls: string[];
   }) => void;
 }
 
@@ -44,7 +45,7 @@ export const ProductVariantSelectorV2: React.FC<ProductVariantSelectorV2Props> =
   // Auto-select first color variant when loaded
   useEffect(() => {
     if (variants.length > 0 && !selectedColorId) {
-      const firstWithStock = variants.find(v => 
+      const firstWithStock = variants.find(v =>
         v.options.some(opt => (opt.stock || 0) > 0)
       ) || variants[0];
       setSelectedColorId(firstWithStock.color_variant_id);
@@ -68,7 +69,8 @@ export const ProductVariantSelectorV2: React.FC<ProductVariantSelectorV2Props> =
       size: selectedSize,
       price,
       stock,
-      image
+      image,
+      galleryUrls: selectedColorVariant?.gallery_urls || []
     });
   }, [selectedColorId, selectedSize, selectedOption, selectedColorVariant, basePrice, onSelectionChange]);
 
@@ -107,11 +109,10 @@ export const ProductVariantSelectorV2: React.FC<ProductVariantSelectorV2Props> =
               <button
                 key={variant.color_variant_id}
                 onClick={() => setSelectedColorId(variant.color_variant_id)}
-                className={`relative group flex flex-col items-center ${
-                  isSelected
+                className={`relative group flex flex-col items-center ${isSelected
                     ? 'ring-2 ring-primary ring-offset-2'
                     : 'ring-1 ring-border hover:ring-2 hover:ring-primary/50'
-                } rounded-lg p-1 transition-all`}
+                  } rounded-lg p-1 transition-all`}
                 disabled={isOutOfStock}
               >
                 <div className="w-16 h-16 rounded-md overflow-hidden">
@@ -154,13 +155,12 @@ export const ProductVariantSelectorV2: React.FC<ProductVariantSelectorV2Props> =
                   key={option.option_id}
                   onClick={() => !isOutOfStock && setSelectedSize(option.size)}
                   disabled={isOutOfStock}
-                  className={`relative px-4 py-2 rounded-md border transition-all ${
-                    isSelected
+                  className={`relative px-4 py-2 rounded-md border transition-all ${isSelected
                       ? 'bg-primary text-primary-foreground border-primary'
                       : isOutOfStock
-                      ? 'bg-muted text-muted-foreground border-muted cursor-not-allowed'
-                      : 'bg-background hover:bg-accent border-border'
-                  }`}
+                        ? 'bg-muted text-muted-foreground border-muted cursor-not-allowed'
+                        : 'bg-background hover:bg-accent border-border'
+                    }`}
                 >
                   <span className="font-medium">{option.size}</span>
                   {isOutOfStock && (

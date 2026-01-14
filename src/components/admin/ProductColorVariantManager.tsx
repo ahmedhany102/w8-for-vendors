@@ -20,6 +20,7 @@ interface ColorVariant {
   id?: string;
   color: string;
   image: string | null;
+  gallery_urls: string[]; // Additional gallery images
   options: ColorVariantOption[];
 }
 
@@ -72,6 +73,7 @@ const ProductColorVariantManager: React.FC<ProductColorVariantManagerProps> = ({
     const newVariant: ColorVariant = {
       color: '',
       image: null,
+      gallery_urls: [],
       options: []
     };
     const updatedVariants = [...localVariants, newVariant];
@@ -155,6 +157,75 @@ const ProductColorVariantManager: React.FC<ProductColorVariantManagerProps> = ({
     }
   };
 
+  // Handle gallery image upload
+  const handleGalleryImageUpload = async (variantIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // Validate all files
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('يرجى اختيار ملفات صور صالحة فقط');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('حجم كل صورة يجب أن يكون أقل من 5 ميجابايت');
+        return;
+      }
+    }
+
+    setUploadingIndex(variantIndex);
+
+    try {
+      const uploadedUrls: string[] = [];
+
+      for (const file of Array.from(files)) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `gallery_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `variants/gallery/${fileName}`;
+
+        const { data, error } = await supabase.storage
+          .from('products_images')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (error) {
+          console.error('Upload error:', error);
+          toast.error('فشل في رفع إحدى الصور');
+          continue;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('products_images')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(urlData.publicUrl);
+      }
+
+      if (uploadedUrls.length > 0) {
+        const currentGallery = localVariants[variantIndex].gallery_urls || [];
+        handleVariantChange(variantIndex, 'gallery_urls', [...currentGallery, ...uploadedUrls]);
+        toast.success(`تم رفع ${uploadedUrls.length} صورة بنجاح`);
+      }
+    } catch (err) {
+      console.error('Gallery upload error:', err);
+      toast.error('حدث خطأ أثناء رفع الصور');
+    } finally {
+      setUploadingIndex(null);
+      // Clear the input
+      e.target.value = '';
+    }
+  };
+
+  // Remove a gallery image
+  const removeGalleryImage = (variantIndex: number, imageIndex: number) => {
+    const currentGallery = [...(localVariants[variantIndex].gallery_urls || [])];
+    currentGallery.splice(imageIndex, 1);
+    handleVariantChange(variantIndex, 'gallery_urls', currentGallery);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -219,6 +290,49 @@ const ProductColorVariantManager: React.FC<ProductColorVariantManagerProps> = ({
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Gallery Images */}
+              <div className="border-t pt-4 mt-4">
+                <div className="flex justify-between items-center mb-2">
+                  <Label className="text-sm font-medium">صور إضافية للمعرض (اختياري)</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => handleGalleryImageUpload(variantIndex, e)}
+                      disabled={uploadingIndex === variantIndex}
+                      className="w-auto text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700"
+                    />
+                    {uploadingIndex === variantIndex && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  هذه الصور ستظهر في معرض المنتج عند اختيار هذا اللون
+                </p>
+                {(variant.gallery_urls && variant.gallery_urls.length > 0) && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {variant.gallery_urls.map((url, imgIndex) => (
+                      <div key={imgIndex} className="relative group">
+                        <img
+                          src={url}
+                          alt={`${variant.color} gallery ${imgIndex + 1}`}
+                          className="h-16 w-16 object-cover rounded border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeGalleryImage(variantIndex, imgIndex)}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Size Options */}
