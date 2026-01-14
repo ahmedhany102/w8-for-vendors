@@ -47,100 +47,28 @@ const RevenueAnalytics: React.FC = () => {
     try {
       setLoading(true);
 
-      // 1. Fetch all active vendors
-      const { data: vendors, error: vendorsError } = await supabase
-        .from('vendors')
-        .select('id, name, commission_rate, logo_url, status')
-        .eq('status', 'active');
+      // Use RPC for consistent server-side calculations
+      const { data, error } = await supabase.rpc('get_vendor_analytics');
 
-      if (vendorsError) throw vendorsError;
-
-      if (!vendors || vendors.length === 0) {
-        setAnalytics([]);
+      if (error) {
+        console.error('Error fetching analytics:', error);
+        toast.error('Failed to load analytics');
         return;
       }
 
-      // 2. Fetch all order_items with vendor_id (for vendor products)
-      const { data: orderItems, error: itemsError } = await supabase
-        .from('order_items')
-        .select(`
-          id,
-          order_id,
-          vendor_id,
-          quantity,
-          total_price,
-          created_at
-        `)
-        .not('vendor_id', 'is', null);
-
-      if (itemsError) {
-        console.error('Error fetching order items:', itemsError);
-      }
-
-      // 3. Calculate per-vendor analytics
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const weekStart = new Date(now);
-      weekStart.setDate(weekStart.getDate() - 7);
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-      const vendorAnalytics: VendorAnalytics[] = vendors.map(vendor => {
-        // Filter order items for this vendor
-        const vendorItems = (orderItems || []).filter(item => item.vendor_id === vendor.id);
-
-        // Calculate totals
-        let totalRevenue = 0;
-        let totalOrders = 0;
-        let todayRevenue = 0;
-        let weekRevenue = 0;
-        let monthRevenue = 0;
-        const orderIds = new Set<string>();
-
-        vendorItems.forEach(item => {
-          const itemTotal = item.total_price || 0;
-          totalRevenue += itemTotal;
-
-          // Count unique orders
-          if (item.order_id) {
-            if (!orderIds.has(item.order_id)) {
-              orderIds.add(item.order_id);
-              totalOrders++;
-            }
-          }
-
-          // Time-based calculations
-          const itemDate = new Date(item.created_at);
-          if (itemDate >= todayStart) {
-            todayRevenue += itemTotal;
-          }
-          if (itemDate >= weekStart) {
-            weekRevenue += itemTotal;
-          }
-          if (itemDate >= monthStart) {
-            monthRevenue += itemTotal;
-          }
-        });
-
-        const commissionRate = vendor.commission_rate || 10;
-        const platformCommission = totalRevenue * (commissionRate / 100);
-        const vendorPayout = totalRevenue - platformCommission;
-
-        return {
-          vendor_id: vendor.id,
-          vendor_name: vendor.name,
-          commission_rate: commissionRate,
-          total_orders: totalOrders,
-          total_revenue: totalRevenue,
-          today_revenue: todayRevenue,
-          week_revenue: weekRevenue,
-          month_revenue: monthRevenue,
-          platform_commission: platformCommission,
-          vendor_payout: vendorPayout,
-        };
-      });
-
-      // Sort by total revenue descending
-      vendorAnalytics.sort((a, b) => b.total_revenue - a.total_revenue);
+      // Map RPC response to VendorAnalytics interface
+      const vendorAnalytics: VendorAnalytics[] = (data || []).map((v: any) => ({
+        vendor_id: v.vendor_id,
+        vendor_name: v.vendor_name || 'Unknown',
+        commission_rate: v.commission_rate || 10,
+        total_orders: v.total_orders || 0,
+        total_revenue: v.total_revenue || 0,
+        today_revenue: v.today_revenue || 0,
+        week_revenue: v.week_revenue || 0,
+        month_revenue: v.month_revenue || 0,
+        platform_commission: v.platform_commission || 0,
+        vendor_payout: v.vendor_payout || 0,
+      }));
 
       setAnalytics(vendorAnalytics);
     } catch (error: any) {
