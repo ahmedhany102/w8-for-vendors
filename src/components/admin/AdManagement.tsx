@@ -14,6 +14,7 @@ import { useSupabaseAds } from "@/hooks/useSupabaseAds";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Trash2, Plus, Edit, Eye, EyeOff, Upload, Link, Monitor, Smartphone, Loader2 } from "lucide-react";
+import { compressImage } from "@/utils/imageCompression";
 
 /**
  * Sanitize redirect URL to ensure it's an internal path only
@@ -90,15 +91,18 @@ const AdManagement = () => {
     try {
       setIsUploading(true);
 
+      // Compress image before upload
+      const compressedFile = await compressImage(file);
+
       // Generate unique filename
-      const fileExt = file.name.split('.').pop();
+      const fileExt = compressedFile.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       const filePath = `images/${fileName}`;
 
       // Upload to Supabase Storage bucket 'promos' (neutral name to avoid ad blockers)
       const { data, error } = await supabase.storage
         .from('promos')
-        .upload(filePath, file, {
+        .upload(filePath, compressedFile, {
           cacheControl: '3600',
           upsert: false
         });

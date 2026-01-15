@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Plus, Trash2, Edit2, Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { compressImage } from '@/utils/imageCompression';
 
 /**
  * Sanitize redirect URL to ensure it's an internal path only
@@ -141,15 +142,18 @@ const VendorAdsManagement: React.FC<VendorAdsManagementProps> = ({ vendorId }) =
     try {
       setIsUploading(true);
 
+      // Compress image before upload
+      const compressedFile = await compressImage(file);
+
       // Generate unique filename with vendor prefix
-      const fileExt = file.name.split('.').pop();
+      const fileExt = compressedFile.name.split('.').pop();
       const fileName = `vendor_${vendorId}_${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       const filePath = `vendor-images/${fileName}`;
 
       // Upload to Supabase Storage bucket 'promos'
       const { data, error } = await supabase.storage
         .from('promos')
-        .upload(filePath, file, {
+        .upload(filePath, compressedFile, {
           cacheControl: '3600',
           upsert: false
         });

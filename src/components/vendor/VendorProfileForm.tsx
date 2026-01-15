@@ -9,6 +9,7 @@ import { Loader2, Save, Store, Upload, X, Link as LinkIcon } from 'lucide-react'
 import { VendorProfile, getStatusLabel, getStatusColor } from '@/hooks/useVendorProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { compressImage } from '@/utils/imageCompression';
 
 interface VendorProfileFormProps {
   profile: VendorProfile;
@@ -39,13 +40,16 @@ export const VendorProfileForm = ({ profile, onUpdate }: VendorProfileFormProps)
 
   const uploadImage = async (file: File): Promise<string | null> => {
     try {
-      const fileExt = file.name.split('.').pop();
+      // Compress image before upload
+      const compressedFile = await compressImage(file);
+
+      const fileExt = compressedFile.name.split('.').pop();
       const fileName = `${profile.id}_logo_${Date.now()}.${fileExt}`;
       const filePath = `vendor-logos/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('vendor-assets')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, compressedFile, { upsert: true });
 
       if (uploadError) {
         console.error('Error uploading logo:', uploadError);

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, Plus, Upload, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { compressImage } from '@/utils/imageCompression';
 
 interface ColorVariantOption {
   id?: string;
@@ -125,13 +126,16 @@ const ProductColorVariantManager: React.FC<ProductColorVariantManagerProps> = ({
     setUploadingIndex(variantIndex);
 
     try {
-      const fileExt = file.name.split('.').pop();
+      // Compress image before upload
+      const compressedFile = await compressImage(file);
+
+      const fileExt = compressedFile.name.split('.').pop();
       const fileName = `variant_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `variants/${fileName}`;
 
       const { data, error } = await supabase.storage
         .from('products_images')
-        .upload(filePath, file, {
+        .upload(filePath, compressedFile, {
           cacheControl: '3600',
           upsert: false
         });
@@ -180,13 +184,16 @@ const ProductColorVariantManager: React.FC<ProductColorVariantManagerProps> = ({
       const uploadedUrls: string[] = [];
 
       for (const file of Array.from(files)) {
-        const fileExt = file.name.split('.').pop();
+        // Compress each gallery image
+        const compressedFile = await compressImage(file);
+
+        const fileExt = compressedFile.name.split('.').pop();
         const fileName = `gallery_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `variants/gallery/${fileName}`;
 
         const { data, error } = await supabase.storage
           .from('products_images')
-          .upload(filePath, file, {
+          .upload(filePath, compressedFile, {
             cacheControl: '3600',
             upsert: false
           });

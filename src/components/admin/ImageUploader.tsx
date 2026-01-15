@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, X, Upload, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
+import { compressImage } from "@/utils/imageCompression";
 
 interface ImageUploaderProps {
   value?: string[];
@@ -37,17 +38,20 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
     try {
       for (const file of files) {
+        // 0. ضغط الصورة قبل الرفع (يقلل حجمها تلقائياً)
+        const compressedFile = await compressImage(file);
+
         // 1. إنشاء اسم فريد للملف
-        const fileExt = file.name.split('.').pop();
+        const fileExt = compressedFile.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
         const filePath = folder ? `${folder}${fileName}` : fileName;
 
         // 2. الرفع المباشر لـ Supabase Storage
         const { error: uploadError } = await supabase.storage
           .from(bucket)
-          .upload(filePath, file, {
+          .upload(filePath, compressedFile, {
             upsert: false,
-            contentType: file.type // مهم عشان المتصفح يعرف نوع الملف
+            contentType: compressedFile.type // مهم عشان المتصفح يعرف نوع الملف
           });
 
         if (uploadError) throw uploadError;
