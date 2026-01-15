@@ -19,6 +19,7 @@ import RecommendationCarousel from '@/components/sections/RecommendationCarousel
 import { useVendorContext } from '@/hooks/useVendorContext';
 import { useVendorCategories } from '@/hooks/useVendors';
 import VendorStoreHeader from '@/components/vendor/VendorStoreHeader';
+import SEO from '@/components/SEO';
 
 interface Product {
   id: string;
@@ -386,6 +387,12 @@ const ProductDetails = () => {
 
   return (
     <Layout hideGlobalHeader={isVendorContext} hideFooter={isVendorContext}>
+      <SEO
+        title={product.name}
+        description={product.description?.substring(0, 160) || `تسوق ${product.name} بأفضل سعر`}
+        image={product.main_image || (product.images && product.images[0]) || undefined}
+        type="product"
+      />
       {/* Vendor Header (when in vendor context) */}
       {isVendorContext && contextVendorId && (
         <VendorStoreHeader

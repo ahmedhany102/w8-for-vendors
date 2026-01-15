@@ -7,6 +7,7 @@ import { Loader } from '@/components/ui/loader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Store, ShoppingBag } from 'lucide-react';
 import DynamicSections from '@/components/sections/DynamicSections';
+import SEO from '@/components/SEO';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -17,6 +18,7 @@ const Index = () => {
   if (loading) {
     return (
       <Layout>
+        <SEO />
         <div className="container mx-auto px-4 py-6">
           <div className="h-48 mb-6 flex items-center justify-center">
             <Loader size="lg" color="primary" className="mb-4" />
@@ -28,6 +30,10 @@ const Index = () => {
 
   return (
     <Layout>
+      <SEO
+        title="سرعلي - امتلك متجرك الإلكتروني في ثوانٍ"
+        description="أفضل منصة للتجارة الإلكترونية في مصر. تسوق آلاف المنتجات أو ابدأ مشروعك الخاص اليوم."
+      />
       <div className="container mx-auto px-4 py-6">
         {/* Hero Section for Guest Users - Speed-focused branding */}
         {!user && (

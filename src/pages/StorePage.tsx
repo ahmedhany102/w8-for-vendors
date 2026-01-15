@@ -11,6 +11,7 @@ import { useBestSellers, useLastViewed } from '@/hooks/useSections';
 import { ProductCarousel } from '@/components/sections';
 import VendorAdCarousel from '@/components/vendor/VendorAdCarousel';
 import VendorStoreHeader from '@/components/vendor/VendorStoreHeader';
+import SEO from '@/components/SEO';
 
 const StorePage = () => {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ const StorePage = () => {
 
   // Get vendor context - NO MANUAL DETECTION
   // VendorContextProvider guarantees vendorId is available
-  const { vendorId, vendorSlug } = useVendorContext();
+  const { vendorId, vendorSlug, vendor } = useVendorContext();
 
   // Vendor data hooks - use vendorId from context
   const { products, loading: productsLoading } = useVendorProducts(
@@ -46,6 +47,11 @@ const StorePage = () => {
 
   return (
     <Layout hideGlobalHeader hideFooter>
+      <SEO
+        title={vendor?.name ? `${vendor.name} | متجر سرعلي` : 'متجر سرعلي'}
+        description={vendor?.description || `تسوق من متجر ${vendor?.name || 'سرعلي'} - أفضل المنتجات بأفضل الأسعار`}
+        image={vendor?.logo_url || undefined}
+      />
       {/* Unified Shopify-style Header */}
       <VendorStoreHeader
         vendorId={vendorId}
