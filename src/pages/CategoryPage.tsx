@@ -232,35 +232,45 @@ const CategoryPage = () => {
           </div>
         </div>
 
-        {/* Subcategory Tabs - shown when on parent category */}
-        {isParentCategory && childCategories.length > 0 && (
-          <div className="mb-6">
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              <Button
-                variant={!selectedSubcategory ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedSubcategory(null)}
-                className="whitespace-nowrap"
-              >
-                الكل ({categoryProducts.length})
-              </Button>
-              {childCategories.map(sub => {
-                const subCount = products.filter(p => p.category_id === sub.id).length;
-                return (
-                  <Button
-                    key={sub.id}
-                    variant={selectedSubcategory === sub.id ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedSubcategory(sub.id)}
-                    className="whitespace-nowrap"
-                  >
-                    {sub.name} ({subCount})
-                  </Button>
-                );
-              })}
+        {/* Subcategory Tabs - only show non-empty categories */}
+        {isParentCategory && childCategories.length > 0 && (() => {
+          // Filter to only show subcategories with products
+          const nonEmptySubcategories = childCategories.filter(sub =>
+            products.some(p => p.category_id === sub.id)
+          );
+
+          // Don't render tabs section if no subcategories have products
+          if (nonEmptySubcategories.length === 0) return null;
+
+          return (
+            <div className="mb-6">
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <Button
+                  variant={!selectedSubcategory ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedSubcategory(null)}
+                  className="whitespace-nowrap"
+                >
+                  الكل ({categoryProducts.length})
+                </Button>
+                {nonEmptySubcategories.map(sub => {
+                  const subCount = products.filter(p => p.category_id === sub.id).length;
+                  return (
+                    <Button
+                      key={sub.id}
+                      variant={selectedSubcategory === sub.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedSubcategory(sub.id)}
+                      className="whitespace-nowrap"
+                    >
+                      {sub.name} ({subCount})
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Product Catalog Header */}
         <ProductCatalogHeader

@@ -97,11 +97,11 @@ const VendorStoreHeader: React.FC<VendorStoreHeaderProps> = ({
                             <Menu className="w-5 h-5" />
                         </Button>
 
-                        {/* CENTER: Store Logo (small brand logo, NOT avatar) */}
-                        <div className="flex-1 flex justify-center">
+                        {/* CENTER: Store Logo (absolutely centered) */}
+                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                             {searchOpen ? (
                                 // Search input replaces logo when active (mobile)
-                                <div className="relative w-full max-w-xs">
+                                <div className="relative w-48 sm:w-64">
                                     <Search className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                     <Input
                                         type="text"
@@ -185,6 +185,7 @@ const VendorStoreHeader: React.FC<VendorStoreHeaderProps> = ({
                 isOpen={menuOpen}
                 onClose={() => setMenuOpen(false)}
                 vendorName={vendorName}
+                vendorSlug={vendorSlug}
                 mainCategories={mainCategories}
                 subcategories={subcategories}
                 selectedCategory={selectedCategory}

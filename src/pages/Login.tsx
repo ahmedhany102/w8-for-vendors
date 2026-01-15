@@ -55,7 +55,7 @@ const Login = () => {
       if (success) {
         const destination = redirectParam || sessionStorage.getItem('redirectAfterLogin') || '/';
         sessionStorage.removeItem('redirectAfterLogin');
-        window.location.assign(destination);
+        navigate(destination, { replace: true });
       }
     } catch (error) {
       console.error('Login submission error:', error);

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { X, ChevronDown, ChevronLeft, Package, Layers } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, ChevronDown, ChevronLeft, Package, Layers, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Category {
     id: string;
@@ -18,6 +20,7 @@ interface VendorCategoryMenuProps {
     selectedCategory: string | null;
     selectedSubcategory: string | null;
     onCategorySelect: (categoryId: string | null, subcategoryId: string | null) => void;
+    vendorSlug?: string;
 }
 
 /**
@@ -35,7 +38,10 @@ const VendorCategoryMenu: React.FC<VendorCategoryMenuProps> = ({
     selectedCategory,
     selectedSubcategory,
     onCategorySelect,
+    vendorSlug,
 }) => {
+    const navigate = useNavigate();
+    const { user } = useAuth();
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
     const toggleExpand = (categoryId: string) => {
@@ -100,7 +106,7 @@ const VendorCategoryMenu: React.FC<VendorCategoryMenuProps> = ({
                 </div>
 
                 {/* Category List */}
-                <div className="overflow-y-auto h-[calc(100vh-65px)]">
+                <div className="overflow-y-auto h-[calc(100vh-65px-70px)] pb-4">
                     {/* All Products */}
                     <button
                         onClick={handleSelectAll}
@@ -177,6 +183,23 @@ const VendorCategoryMenu: React.FC<VendorCategoryMenuProps> = ({
                         </div>
                     )}
                 </div>
+
+                {/* Login Button Footer - Only show if not logged in */}
+                {!user && vendorSlug && (
+                    <div className="absolute bottom-16 left-0 right-0 p-4 border-t bg-background">
+                        <Button
+                            onClick={() => {
+                                navigate(`/store/${vendorSlug}/login`);
+                                onClose();
+                            }}
+                            className="w-full gap-2"
+                            variant="default"
+                        >
+                            <LogIn className="w-4 h-4" />
+                            تسجيل الدخول
+                        </Button>
+                    </div>
+                )}
             </div>
         </>
     );
