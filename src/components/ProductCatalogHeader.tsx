@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from './ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -10,13 +11,18 @@ interface ProductCatalogHeaderProps {
 
 const ProductCatalogHeader: React.FC<ProductCatalogHeaderProps> = ({ cart, onCartClick }) => {
   const { user, isAdmin } = useAuth();
+  const location = useLocation();
 
   const cartItemCount = cart.reduce((total, item) => total + (item.quantity || 0), 0);
+
+  // Hide cart button on vendor store pages - they have their own cart in bottom nav
+  const isVendorStorePage = location.pathname.startsWith('/store/') || location.pathname.startsWith('/store');
+  const showCartButton = user && !isAdmin && !isVendorStorePage;
 
   return (
     <div className="flex justify-between items-center mb-6 min-h-[48px]">
       <h2 className="text-3xl font-bold text-primary">Our Products</h2>
-      {user && !isAdmin && (
+      {showCartButton && (
         <div className="relative">
           <Button
             onClick={onCartClick}

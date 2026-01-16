@@ -175,7 +175,7 @@ export const useVendorProducts = (statusFilter?: string) => {
             if (updates.name !== undefined) cleanUpdates.name = updates.name;
             if (updates.description !== undefined) cleanUpdates.description = updates.description;
             if (updates.price !== undefined) cleanUpdates.price = Number(updates.price);
-            if (updates.category !== undefined) cleanUpdates.category_id = updates.category; // Save to category_id
+            if (updates.category !== undefined) cleanUpdates.category_id = updates.category || null; // Empty string → null for UUID
             if (updates.main_image !== undefined) cleanUpdates.main_image = updates.main_image;
             if (updates.images !== undefined) cleanUpdates.images = updates.images;
             if (updates.colors !== undefined) cleanUpdates.colors = updates.colors;

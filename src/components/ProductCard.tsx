@@ -137,8 +137,18 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
           color = product.colors[0];
         }
 
+        // Create product with discounted price and shipping fields
+        const productForCart = {
+          ...product,
+          price: finalPrice, // Apply discount for simple products
+          user_id: (product as any).user_id,
+          vendor_id: (product as any).vendor_id,
+          is_free_shipping: (product as any).is_free_shipping || false,
+          is_fast_shipping: (product as any).is_fast_shipping || false,
+        };
+
         const cartDb = CartDatabase.getInstance();
-        await cartDb.addToCart(product, size, color, 1);
+        await cartDb.addToCart(productForCart, size, color, 1);
       }
 
       toast.success("تم إضافة المنتج إلى السلة");
@@ -270,8 +280,8 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
                       setSelectedVariant(variant);
                     }}
                     className={`w-5 h-5 rounded-full overflow-hidden transition-all ${isSelected
-                        ? 'ring-2 ring-primary ring-offset-1 scale-110'
-                        : 'border border-gray-300 hover:scale-110'
+                      ? 'ring-2 ring-primary ring-offset-1 scale-110'
+                      : 'border border-gray-300 hover:scale-110'
                       }`}
                     title={variant.label}
                   >
