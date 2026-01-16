@@ -206,7 +206,7 @@ const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
                 </h4>
 
                 {/* Vendor - Fixed height container */}
-                <div className="min-h-[24px] mb-2">
+                <div className="min-h-[24px]">
                   {product.vendor_name && product.vendor_slug && (
                     <button
                       onClick={(e) => handleVendorClick(e, product.vendor_slug)}
@@ -217,9 +217,12 @@ const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
                     </button>
                   )}
                 </div>
+              </CardContent>
 
-                {/* Price - Always shown */}
-                <div className="flex items-center gap-2">
+              {/* Price + Button anchored to bottom together */}
+              <CardFooter className="p-3 pt-0 mt-auto flex flex-col gap-2">
+                {/* Price */}
+                <div className="flex items-center gap-2 w-full">
                   <span className="text-primary font-bold">{discountedPrice.toFixed(0)} ج.م</span>
                   {product.discount && product.discount > 0 && (
                     <span className="text-xs text-muted-foreground line-through">
@@ -227,9 +230,7 @@ const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
                     </span>
                   )}
                 </div>
-              </CardContent>
 
-              <CardFooter className="p-3 pt-0 mt-auto">
                 <Button
                   size="sm"
                   className="w-full"

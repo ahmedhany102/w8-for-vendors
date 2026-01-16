@@ -293,18 +293,6 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                   )}
                 </div>
 
-                {/* Price - Always shown */}
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="font-bold text-primary">
-                    {finalPrice.toFixed(0)} ج.م
-                  </span>
-                  {product.discount && product.discount > 0 && (
-                    <span className="text-xs text-muted-foreground line-through">
-                      {product.price.toFixed(0)}
-                    </span>
-                  )}
-                </div>
-
                 {/* Vendor - Fixed height container to reserve space */}
                 <div className="min-h-[20px]">
                   {product.vendor_name && (
@@ -318,7 +306,20 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                 </div>
               </CardContent>
 
-              <CardFooter className="p-3 pt-0 mt-auto">
+              {/* Price + Button anchored to bottom together */}
+              <CardFooter className="p-3 pt-0 mt-auto flex flex-col gap-2">
+                {/* Price */}
+                <div className="flex items-center gap-2 w-full">
+                  <span className="font-bold text-primary">
+                    {finalPrice.toFixed(0)} ج.م
+                  </span>
+                  {product.discount && product.discount > 0 && (
+                    <span className="text-xs text-muted-foreground line-through">
+                      {product.price.toFixed(0)}
+                    </span>
+                  )}
+                </div>
+
                 <Button
                   onClick={(e) => handleAddToCart(e, product)}
                   className={`w-full text-sm ${isOutOfStock ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary hover:bg-primary/90 text-primary-foreground'}`}

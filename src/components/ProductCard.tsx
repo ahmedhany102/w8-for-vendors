@@ -84,16 +84,20 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
 
   // Calculate price (base price + variant adjustment)
   const basePrice = product.price || 0;
-  const finalPrice = selectedVariant
+  const variantAdjustedPrice = selectedVariant
     ? basePrice + (selectedVariant.price_adjustment || 0)
     : (Array.isArray(product.sizes) && product.sizes.length > 0
       ? Math.min(...product.sizes.filter(s => s && s.stock > 0).map(s => s.price || basePrice))
       : basePrice);
 
-  // Calculate original price if there is a discount
-  const originalPrice = product.hasDiscount && product.discount
-    ? finalPrice * (100 / (100 - product.discount))
-    : finalPrice;
+  // Original price is the base price before discount
+  const originalPrice = variantAdjustedPrice;
+
+  // Apply discount if available (discount is a percentage)
+  const discountPercent = Number(product.discount) || 0;
+  const finalPrice = discountPercent > 0
+    ? variantAdjustedPrice - (variantAdjustedPrice * discountPercent / 100)
+    : variantAdjustedPrice;
 
   // Quick add to cart handler with enhanced error handling
   const handleQuickAddToCart = async (e: React.MouseEvent) => {
@@ -217,8 +221,8 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
         )}
       </CardHeader>
 
-      <CardContent className="p-3 pb-2">
-        <h3 className="font-semibold text-sm mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+      <CardContent className="p-3 pb-2 flex-grow">
+        <h3 className="font-semibold text-sm mb-1 line-clamp-2 min-h-[40px] group-hover:text-primary transition-colors">
           {product.name}
         </h3>
 
@@ -234,31 +238,19 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
           </Link>
         )}
 
-        {/* Free Shipping Badge */}
-        {product.is_free_shipping && (
-          <div className="flex items-center gap-1 text-xs text-primary font-medium mb-1">
-            <Truck className="w-3 h-3" />
-            <span>شحن مجاني</span>
-          </div>
-        )}
-
-        {/* Fast Shipping Badge */}
-        {product.is_fast_shipping && (
-          <div className="flex items-center gap-1 text-xs text-amber-500 font-medium mb-1">
-            <Zap className="w-3 h-3" />
-            <span>شحن سريع</span>
-          </div>
-        )}
-
-        {/* Price section */}
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-lg font-bold text-primary">
-            {finalPrice.toFixed(0)} جنيه
-          </span>
-          {product.hasDiscount && product.discount && originalPrice > finalPrice && (
-            <span className="text-sm text-muted-foreground line-through">
-              {originalPrice.toFixed(0)} جنيه
-            </span>
+        {/* Shipping Badges - Fixed height container */}
+        <div className="min-h-[22px] mb-1">
+          {product.is_free_shipping && (
+            <div className="flex items-center gap-1 text-xs text-primary font-medium">
+              <Truck className="w-3 h-3" />
+              <span>شحن مجاني</span>
+            </div>
+          )}
+          {product.is_fast_shipping && (
+            <div className="flex items-center gap-1 text-xs text-amber-500 font-medium">
+              <Zap className="w-3 h-3" />
+              <span>شحن سريع</span>
+            </div>
           )}
         </div>
 
@@ -337,7 +329,20 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
         )}
       </CardContent>
 
-      <CardFooter className="p-3 pt-0 mt-auto">
+      {/* Price + Button anchored to bottom together */}
+      <CardFooter className="p-3 pt-0 mt-auto flex flex-col gap-2">
+        {/* Price section */}
+        <div className="flex items-center gap-2 w-full">
+          <span className="text-lg font-bold text-primary">
+            {finalPrice.toFixed(0)} جنيه
+          </span>
+          {discountPercent > 0 && originalPrice > finalPrice && (
+            <span className="text-sm text-muted-foreground line-through">
+              {originalPrice.toFixed(0)} جنيه
+            </span>
+          )}
+        </div>
+
         <Button
           onClick={handleQuickAddToCart}
           disabled={isOutOfStock}
