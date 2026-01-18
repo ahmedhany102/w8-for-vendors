@@ -89,6 +89,28 @@ export const VendorProductForm: React.FC<VendorProductFormProps> = ({
     loadVariants();
   }, [initialData?.id]);
 
+  // Re-sync category state when categories data loads (fixes edit mode initialization)
+  useEffect(() => {
+    if (categories.length > 0 && initialData) {
+      const categoryId = initialData.category_id || initialData.category || '';
+      if (categoryId) {
+        // Find the category to check if it's a child or parent
+        const category = categories.find(c => c.id === categoryId);
+        if (category) {
+          if (category.parent_id) {
+            // It's a child category - set both parent and child
+            setParentCategoryId(category.parent_id);
+            setChildCategoryId(categoryId);
+          } else {
+            // It's a parent category - set only parent
+            setParentCategoryId(categoryId);
+            setChildCategoryId(null);
+          }
+        }
+      }
+    }
+  }, [categories, initialData]);
+
   const handleChange = (field: keyof ProductFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
