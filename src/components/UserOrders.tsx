@@ -23,7 +23,7 @@ const UserOrders = () => {
   if (orders.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">You haven't placed any orders yet.</p>
+        <p className="text-gray-500">لم تقم بأي طلبات بعد.</p>
       </div>
     );
   }
@@ -36,6 +36,18 @@ const UserOrders = () => {
       case 'DELIVERED': return 'bg-green-100 text-green-800';
       case 'CANCELLED': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Translate status to Arabic
+  const getStatusLabel = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case 'PENDING': return 'قيد الانتظار';
+      case 'PROCESSING': return 'جارِ التجهيز';
+      case 'SHIPPED': return 'تم الشحن';
+      case 'DELIVERED': return 'تم التوصيل';
+      case 'CANCELLED': return 'ملغي';
+      default: return status;
     }
   };
 
@@ -75,15 +87,15 @@ const UserOrders = () => {
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-lg">Order #{orderNumber}</CardTitle>
+              <CardTitle className="text-lg">طلب #{orderNumber}</CardTitle>
               <p className="text-sm text-gray-600">
-                Placed on {format(new Date(order.created_at), 'PPP')}
+                تم الطلب في {format(new Date(order.created_at), 'PPP')}
               </p>
             </div>
             <div className="text-right">
               <div className="flex items-center gap-2 mb-1">
                 <Badge className={getStatusColor(order.status)}>
-                  {order.status}
+                  {getStatusLabel(order.status)}
                 </Badge>
                 {canCancelOrder(order) && (
                   <AlertDialog>
@@ -95,20 +107,20 @@ const UserOrders = () => {
                         className="h-6 px-2 text-xs"
                       >
                         <X className="h-3 w-3 mr-1" />
-                        {cancelling === order.id ? 'Cancelling...' : 'Cancel'}
+                        {cancelling === order.id ? 'جاري الإلغاء...' : 'إلغاء'}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Cancel Order</AlertDialogTitle>
+                        <AlertDialogTitle>إلغاء الطلب</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to cancel order #{orderNumber}? This action cannot be undone.
+                          هل أنت متأكد من إلغاء الطلب رقم #{orderNumber}؟ لا يمكن التراجع عن هذا الإجراء.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Keep Order</AlertDialogCancel>
+                        <AlertDialogCancel>الإبقاء على الطلب</AlertDialogCancel>
                         <AlertDialogAction onClick={() => handleCancelOrder(order.id)}>
-                          Yes, Cancel Order
+                          نعم، إلغاء الطلب
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -126,7 +138,7 @@ const UserOrders = () => {
           <div className="space-y-3">
             {/* Order Items */}
             <div>
-              <h4 className="font-medium mb-2">Items:</h4>
+              <h4 className="font-medium mb-2">المنتجات:</h4>
               <div className="space-y-2">
                 {Array.isArray(order.items) && order.items.map((item, index) => (
                   <div key={index} className="flex justify-between items-center text-sm">
@@ -141,15 +153,15 @@ const UserOrders = () => {
                       <div>
                         <p className="font-medium">{item.productName}</p>
                         {item.color && item.color !== '-' && (
-                          <p className="text-gray-500">Color: {item.color}</p>
+                          <p className="text-gray-500">اللون: {item.color}</p>
                         )}
                         {item.size && item.size !== '-' && (
-                          <p className="text-gray-500">Size: {item.size}</p>
+                          <p className="text-gray-500">المقاس: {item.size}</p>
                         )}
                       </div>
                     </div>
                     <div className="text-right">
-                      <p>Qty: {item.quantity}</p>
+                      <p>الكمية: {item.quantity}</p>
                       <p className="font-medium">${Number(item.totalPrice ?? 0).toFixed(2)}</p>
                     </div>
                   </div>
@@ -160,7 +172,7 @@ const UserOrders = () => {
             {/* Shipping Address */}
             {order.customer_info?.address && (
               <div>
-                <h4 className="font-medium mb-1">Shipping Address:</h4>
+                <h4 className="font-medium mb-1">عنوان الشحن:</h4>
                 <p className="text-sm text-gray-600">
                   {order.customer_info.address.street}, {order.customer_info.address.city}, {order.customer_info.address.zipCode}
                 </p>
@@ -170,7 +182,7 @@ const UserOrders = () => {
             {/* Order Notes */}
             {order.notes && (
               <div>
-                <h4 className="font-medium mb-1">Notes:</h4>
+                <h4 className="font-medium mb-1">ملاحظات:</h4>
                 <p className="text-sm text-gray-600">{order.notes}</p>
               </div>
             )}
@@ -182,17 +194,17 @@ const UserOrders = () => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-gray-900">My Orders</h2>
+      <h2 className="text-2xl font-bold text-gray-900">طلباتي</h2>
 
       <Tabs defaultValue="active" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="active" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            Active Orders ({activeOrders.length})
+            الطلبات النشطة ({activeOrders.length})
           </TabsTrigger>
           <TabsTrigger value="cancelled" className="flex items-center gap-2">
             <X className="h-4 w-4" />
-            Cancelled Orders ({cancelledOrders.length})
+            الطلبات الملغاة ({cancelledOrders.length})
           </TabsTrigger>
         </TabsList>
 
@@ -200,7 +212,7 @@ const UserOrders = () => {
           {activeOrders.length === 0 ? (
             <div className="text-center py-8">
               <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">You have no active orders.</p>
+              <p className="text-gray-500">لا توجد طلبات نشطة.</p>
             </div>
           ) : (
             activeOrders.map(renderOrderCard)
@@ -211,7 +223,7 @@ const UserOrders = () => {
           {cancelledOrders.length === 0 ? (
             <div className="text-center py-8">
               <X className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">You have no cancelled orders.</p>
+              <p className="text-gray-500">لا توجد طلبات ملغاة.</p>
             </div>
           ) : (
             cancelledOrders.map(renderOrderCard)

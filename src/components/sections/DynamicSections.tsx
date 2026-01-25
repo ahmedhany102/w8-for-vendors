@@ -23,7 +23,7 @@ const LazyBestSellers: React.FC<{ vendorId?: string }> = ({ vendorId }) => {
   if (products.length === 0) return null;
   return (
     <ProductCarousel
-      title="Best Sellers"
+      title="الأكثر مبيعاً"
       products={products}
       loading={loading}
       variant="best_seller"
@@ -39,7 +39,7 @@ const LazyHotDeals: React.FC<{ vendorId?: string }> = ({ vendorId }) => {
   if (products.length === 0) return null;
   return (
     <ProductCarousel
-      title="Hot Deals 🔥"
+      title="عروض ساخنة 🔥"
       products={products}
       loading={loading}
       variant="hot_deals"
@@ -55,7 +55,7 @@ const LazyLastViewed: React.FC<{ vendorId?: string }> = ({ vendorId }) => {
   if (products.length === 0) return null;
   return (
     <ProductCarousel
-      title="Recently Viewed"
+      title="شوهد مؤخراً"
       products={products}
       loading={loading}
       icon={<Clock className="w-5 h-5" />}

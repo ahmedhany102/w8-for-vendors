@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import CartDatabase from '@/models/CartDatabase';
 import { useVendorContext } from '@/hooks/useVendorContext';
 import { useBulkProductVariants } from '@/hooks/useBulkProductVariants';
+import { useLanguageSafe } from '@/contexts/LanguageContext';
 
 interface RecommendationCarouselProps {
   title: string;
@@ -28,9 +29,10 @@ const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
   icon,
   showMoreLink,
   showMoreAction,
-  showMoreLabel = 'عرض المزيد'
+  showMoreLabel
 }) => {
   const navigate = useNavigate();
+  const { t, direction } = useLanguageSafe();
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   // Get vendor context for vendor-scoped navigation
@@ -140,7 +142,7 @@ const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
   }
 
   return (
-    <div className="py-4">
+    <div dir={direction} className="py-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -155,16 +157,16 @@ const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
               onClick={() => showMoreAction ? showMoreAction() : navigate(showMoreLink!)}
               className="text-primary"
             >
-              {showMoreLabel}
-              <ChevronLeft className="w-4 h-4 mr-1" />
+              {showMoreLabel || (t?.products?.viewMore || 'View More')}
+              {direction === 'rtl' ? <ChevronLeft className="w-4 h-4 ms-1" /> : <ChevronRight className="w-4 h-4 ms-1" />}
             </Button>
           )}
           <div className="hidden md:flex gap-1">
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => scroll('right')}>
-              <ChevronRight className="w-4 h-4" />
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => scroll(direction === 'rtl' ? 'left' : 'right')}>
+              {direction === 'rtl' ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </Button>
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => scroll('left')}>
-              <ChevronLeft className="w-4 h-4" />
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => scroll(direction === 'rtl' ? 'right' : 'left')}>
+              {direction === 'rtl' ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </Button>
           </div>
         </div>
@@ -245,8 +247,8 @@ const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
                             key={variant.id}
                             onClick={(e) => handleSwatchClick(e, product.id, variant.image_url || product.image_url || '')}
                             className={`w-5 h-5 rounded-full overflow-hidden transition-all ${isSelected
-                                ? 'ring-2 ring-primary ring-offset-1 scale-110'
-                                : 'border border-gray-300 hover:scale-110'
+                              ? 'ring-2 ring-primary ring-offset-1 scale-110'
+                              : 'border border-gray-300 hover:scale-110'
                               }`}
                             title={variant.label}
                           >
@@ -291,8 +293,8 @@ const RecommendationCarousel: React.FC<RecommendationCarouselProps> = ({
                   onClick={(e) => handleAddToCart(e, product)}
                   disabled={isOutOfStock}
                 >
-                  <ShoppingCart className="w-4 h-4 ml-2" />
-                  {isOutOfStock ? 'غير متوفر' : 'أضف للسلة'}
+                  <ShoppingCart className="w-4 h-4 me-2" />
+                  {isOutOfStock ? (t?.products?.outOfStock || 'Out of Stock') : (t?.products?.addToCart || 'Add to Cart')}
                 </Button>
               </CardFooter>
             </Card>

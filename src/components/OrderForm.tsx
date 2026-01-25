@@ -388,7 +388,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ cartItems, subtotal, onOrderCompl
       console.log('Order successfully created and saved:', createdOrder);
 
       // Show success message
-      toast.success(`Order placed successfully! Order #${orderData.order_number}`);
+      toast.success(`تم إرسال الطلب بنجاح! رقم الطلب: ${orderData.order_number}`);
 
       // Clear cart and complete order process
       if (onOrderComplete) {
@@ -397,7 +397,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ cartItems, subtotal, onOrderCompl
 
     } catch (error: any) {
       console.error('Order creation failed:', error);
-      toast.error('Failed to place order: ' + (error.message || 'Unknown error'));
+      toast.error('فشل في إرسال الطلب: ' + (error.message || 'خطأ غير معروف'));
     } finally {
       setIsSubmitting(false);
     }
@@ -407,38 +407,38 @@ const OrderForm: React.FC<OrderFormProps> = ({ cartItems, subtotal, onOrderCompl
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="name">Full Name *</Label>
+          <Label htmlFor="name">الاسم بالكامل *</Label>
           <Input
             id="name"
             name="name"
             value={formData.name}
             onChange={handleChange}
-            placeholder="Your full name"
+            placeholder="اسمك الكامل"
             required
           />
         </div>
         <div>
-          <Label htmlFor="email">Email *</Label>
+          <Label htmlFor="email">البريد الإلكتروني *</Label>
           <Input
             id="email"
             name="email"
             type="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="your@email.com"
+            placeholder="البريد الإلكتروني"
             required
           />
         </div>
       </div>
 
       <div>
-        <Label htmlFor="phone">Phone Number *</Label>
+        <Label htmlFor="phone">رقم الهاتف *</Label>
         <Input
           id="phone"
           name="phone"
           value={formData.phone}
           onChange={handleChange}
-          placeholder="Your phone number"
+          placeholder="رقم هاتفك"
           required
         />
       </div>
@@ -486,13 +486,13 @@ const OrderForm: React.FC<OrderFormProps> = ({ cartItems, subtotal, onOrderCompl
           </Select>
         </div>
         <div>
-          <Label htmlFor="zipCode">Zip Code</Label>
+          <Label htmlFor="zipCode">الرمز البريدي</Label>
           <Input
             id="zipCode"
             name="zipCode"
             value={formData.zipCode}
             onChange={handleChange}
-            placeholder="Zip Code (optional)"
+            placeholder="الرمز البريدي (اختياري)"
           />
         </div>
       </div>
@@ -500,8 +500,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ cartItems, subtotal, onOrderCompl
       {/* Shipping Cost Display */}
       <div className="bg-muted/50 rounded-lg p-4 space-y-2">
         <div className="flex justify-between text-sm">
-          <span>Subtotal</span>
-          <span>{subtotal.toFixed(2)} EGP</span>
+          <span>المجموع الفرعي</span>
+          <span>{subtotal.toFixed(2)} ج.م</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="flex items-center gap-1">
@@ -523,21 +523,21 @@ const OrderForm: React.FC<OrderFormProps> = ({ cartItems, subtotal, onOrderCompl
         </div>
         {appliedCoupon && (
           <div className="flex justify-between text-sm text-primary">
-            <span>Discount ({appliedCoupon.code})</span>
-            <span>-{discountAmount.toFixed(2)} EGP</span>
+            <span>الخصم ({appliedCoupon.code})</span>
+            <span>-{discountAmount.toFixed(2)} ج.م</span>
           </div>
         )}
         <Separator />
         <div className="flex justify-between font-bold">
-          <span>Total</span>
-          <span>{total.toFixed(2)} EGP</span>
+          <span>الإجمالي</span>
+          <span>{total.toFixed(2)} ج.م</span>
         </div>
       </div>
 
       <div>
-        <Label htmlFor="paymentMethod">Payment Method</Label>
+        <Label htmlFor="paymentMethod">طريقة الدفع</Label>
         <div className="w-full p-2 border border-gray-300 rounded-md bg-white dark:bg-gray-800">
-          Cash on Delivery
+          الدفع عند الاستلام
         </div>
         <input
           type="hidden"
@@ -547,13 +547,13 @@ const OrderForm: React.FC<OrderFormProps> = ({ cartItems, subtotal, onOrderCompl
       </div>
 
       <div>
-        <Label htmlFor="notes">Order Notes (Optional)</Label>
+        <Label htmlFor="notes">ملاحظات الطلب (اختياري)</Label>
         <Textarea
           id="notes"
           name="notes"
           value={formData.notes}
           onChange={handleChange}
-          placeholder="Any special instructions for delivery?"
+          placeholder="أي تعليمات خاصة للتوصيل؟"
           rows={3}
         />
       </div>
@@ -563,7 +563,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ cartItems, subtotal, onOrderCompl
         className="w-full bg-primary hover:bg-primary/90"
         disabled={isSubmitting || isCalculatingShipping}
       >
-        {isSubmitting ? 'Processing Order...' : `Complete Order - ${total.toFixed(2)} EGP`}
+        {isSubmitting ? 'جاري معالجة الطلب...' : `تأكيد الطلب - ${total.toFixed(2)} ج.م`}
       </Button>
     </form>
   );

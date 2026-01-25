@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguageSafe } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +25,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
   const { login, user, loading: authLoading } = useAuth();
+  const { t, direction } = useLanguageSafe();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,7 +72,7 @@ const Login = () => {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-[#fffbf0] to-[#ffdcb0]">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-lg text-orange-900">جاري التحميل...</p>
+          <p className="text-lg text-orange-900">{t?.common?.loading || 'جاري التحميل...'}</p>
         </div>
       </div>
     );
@@ -129,10 +131,10 @@ const Login = () => {
           <Card className="shadow-xl border-0 rounded-2xl overflow-hidden">
             <CardHeader className="text-center pb-4 pt-6">
               <CardTitle className="text-xl lg:text-2xl font-bold text-foreground">
-                تسجيل الدخول
+                {t?.auth?.loginTitle || 'تسجيل الدخول'}
               </CardTitle>
               <CardDescription className="text-sm mt-1">
-                أدخل بياناتك للوصول إلى حسابك
+                {t?.auth?.loginDesc || 'أدخل بياناتك للوصول إلى حسابك'}
               </CardDescription>
             </CardHeader>
 
@@ -144,7 +146,7 @@ const Login = () => {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-right block text-sm">البريد الإلكتروني</FormLabel>
+                        <FormLabel className={`block text-sm ${direction === 'rtl' ? 'text-right' : 'text-left'}`}>{t?.auth?.email || 'البريد الإلكتروني'}</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -169,7 +171,7 @@ const Login = () => {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-right block text-sm">كلمة المرور</FormLabel>
+                        <FormLabel className={`block text-sm ${direction === 'rtl' ? 'text-right' : 'text-left'}`}>{t?.auth?.password || 'كلمة المرور'}</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -197,10 +199,10 @@ const Login = () => {
                     {isSubmitting ? (
                       <div className="flex items-center gap-2">
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        جاري تسجيل الدخول...
+                        {t?.auth?.loggingIn || 'جاري تسجيل الدخول...'}
                       </div>
                     ) : (
-                      "دخول"
+                      t?.auth?.submitLogin || 'دخول'
                     )}
                   </Button>
                 </form>
@@ -210,12 +212,12 @@ const Login = () => {
             <CardFooter className="flex flex-col space-y-3 px-5 lg:px-6 pb-6 pt-2">
               {/* Sign up link */}
               <div className="text-center w-full text-sm">
-                <span className="text-muted-foreground">ليس لديك حساب؟ </span>
+                <span className="text-muted-foreground">{t?.auth?.noAccount || 'ليس لديك حساب؟'} </span>
                 <Link
                   to="/signup"
                   className="text-primary hover:underline font-semibold"
                 >
-                  إنشاء حساب جديد
+                  {t?.auth?.createAccount || 'إنشاء حساب جديد'}
                 </Link>
               </div>
 
@@ -226,7 +228,7 @@ const Login = () => {
                   className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-amber-50 hover:bg-amber-100 rounded-xl text-primary font-semibold transition-colors text-sm"
                 >
                   <Store className="w-4 h-4" />
-                  احصل على متجرك الخاص الآن
+                  {t?.auth?.getYourStore || 'احصل على متجرك الخاص الآن'}
                 </Link>
               </div>
             </CardFooter>
@@ -235,7 +237,7 @@ const Login = () => {
           {/* Back to home link */}
           <div className="text-center mt-4">
             <Link to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-              ← العودة للصفحة الرئيسية
+              {t?.auth?.backToHome || '← العودة للصفحة الرئيسية'}
             </Link>
           </div>
         </div>

@@ -28,14 +28,14 @@ const VendorAnalytics: React.FC<VendorAnalyticsProps> = ({ vendorId }) => {
   React.useEffect(() => {
     const fetchAnalytics = async () => {
       if (!vendorId) return;
-      
+
       try {
         const { supabase } = await import('@/integrations/supabase/client');
-        
+
         // Fetch vendor analytics
         const { data: analyticsData, error: analyticsError } = await supabase
           .rpc('get_vendor_analytics', { _vendor_id: vendorId });
-        
+
         if (analyticsError) {
           console.error('Error fetching analytics:', analyticsError);
         } else if (analyticsData && analyticsData.length > 0) {
@@ -45,7 +45,7 @@ const VendorAnalytics: React.FC<VendorAnalyticsProps> = ({ vendorId }) => {
         // Fetch top products
         const { data: topProductsData, error: topProductsError } = await supabase
           .rpc('get_vendor_top_products', { _vendor_id: vendorId, _limit: 5 });
-        
+
         if (topProductsError) {
           console.error('Error fetching top products:', topProductsError);
         } else if (topProductsData) {
@@ -213,7 +213,7 @@ const VendorAnalytics: React.FC<VendorAnalyticsProps> = ({ vendorId }) => {
                       <p className="text-sm text-muted-foreground">{product.total_sold} قطعة مباعة</p>
                     </div>
                   </div>
-                  <div className="text-left">
+                  <div className="text-start">
                     <p className="font-bold text-green-600">{formatCurrency(product.total_revenue)}</p>
                   </div>
                 </div>

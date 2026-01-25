@@ -33,11 +33,11 @@ const ShoppingCartDialog: React.FC<ShoppingCartDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-gradient-to-b from-primary to-amber-900 text-white" aria-describedby="cart-contents">
         <div className="space-y-4" id="cart-contents">
-          <h2 className="text-xl font-bold text-white border-b border-primary/50 pb-2">Shopping Cart</h2>
+          <h2 className="text-xl font-bold text-white border-b border-primary/50 pb-2">سلة التسوق</h2>
 
           {cart.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-300">Your cart is empty</p>
+              <p className="text-gray-300">سلة التسوق فارغة</p>
             </div>
           ) : (
             <>
@@ -69,10 +69,10 @@ const ShoppingCartDialog: React.FC<ShoppingCartDialogProps> = ({
 
               <div className="border-t border-primary/50 pt-4">
                 <div className="flex justify-between font-bold">
-                  <span>Total:</span>
+                  <span>الإجمالي:</span>
                   <span>{calculateTotal().toFixed(2)} EGP</span>
                 </div>
-                <p className="text-sm text-amber-200 mt-2">Payment Method: Cash on Delivery</p>
+                <p className="text-sm text-amber-200 mt-2">طريقة الدفع: الدفع عند الاستلام</p>
               </div>
 
               <div className="flex justify-between pt-4">
@@ -81,14 +81,14 @@ const ShoppingCartDialog: React.FC<ShoppingCartDialogProps> = ({
                   onClick={onClearCart}
                   className="border-red-700 text-red-400 hover:bg-red-900/30"
                 >
-                  Clear Cart
+                  إفراغ السلة
                 </Button>
                 <Button
                   onClick={onProceedToCheckout}
                   className="bg-white text-primary hover:bg-white/90 interactive-button"
                   disabled={cart.length === 0}
                 >
-                  Checkout
+                  إتمام الشراء
                 </Button>
               </div>
             </>

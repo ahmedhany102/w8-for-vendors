@@ -54,7 +54,7 @@ const Admin = ({ activeTab = "dashboard" }) => {
     <Layout hideFooter>
       <div className="container mx-auto py-4 px-4 md:px-0">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start mb-6">
+        <div className="flex flex-col md:flex-row-reverse justify-between items-start mb-6">
           <div>
             <h1 className="text-2xl font-bold mb-2">لوحة التحكم</h1>
             <p className="text-gray-600">

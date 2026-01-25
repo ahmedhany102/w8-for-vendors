@@ -52,11 +52,11 @@ const AdminLogin = () => {
 
   const onSubmit = async (data: AdminLoginFormValues) => {
     if (isSubmitting) return;
-    
+
     setIsSubmitting(true);
     try {
       console.log("Attempting admin login");
-      
+
       const success = await adminLogin(data.email, data.password);
       if (success) {
         console.log("Admin login successful, navigating to admin dashboard");
@@ -64,7 +64,7 @@ const AdminLogin = () => {
       }
     } catch (error) {
       console.error('Admin login submission error:', error);
-      toast.error('Admin login failed. Please try again.');
+      toast.error('فشل تسجيل دخول المسؤول. يرجى المحاولة مرة أخرى.');
     } finally {
       setIsSubmitting(false);
     }
@@ -103,7 +103,7 @@ const AdminLogin = () => {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input 
+                        <Input
                           id="admin-email"
                           name="email"
                           type="email"
@@ -125,11 +125,11 @@ const AdminLogin = () => {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input 
+                        <Input
                           id="admin-password"
                           name="password"
                           type="password"
-                          placeholder="••••••••" 
+                          placeholder="••••••••"
                           {...field}
                           autoComplete="current-password"
                           disabled={isSubmitting}
@@ -140,8 +140,8 @@ const AdminLogin = () => {
                     </FormItem>
                   )}
                 />
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full bg-green-800 hover:bg-green-900"
                   disabled={isSubmitting}
                 >

@@ -3,10 +3,13 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { X, Menu, User, ShoppingCart, Home, Phone, LogIn, UserPlus, Heart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguageSafe } from "@/contexts/LanguageContext";
 import CartDatabase from "@/models/CartDatabase";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 
 const MainNavigation = () => {
   const { user } = useAuth();
+  const { t, direction } = useLanguageSafe();
   const location = useLocation();
   const [cartItemCount, setCartItemCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -48,7 +51,7 @@ const MainNavigation = () => {
 
   return (
     <nav className={`w-full py-2 shadow-md bg-green-900 text-white z-50 ${isOpen ? "h-screen fixed top-0 left-0 flex flex-col" : ""}`}>
-      <div className={`container mx-auto flex ${isOpen ? "flex-col h-full" : "flex-row"} justify-between items-center px-4`}>
+      <div className={`container mx-auto flex ${isOpen ? "flex-col h-full" : (direction === 'rtl' ? "flex-row-reverse" : "flex-row")} justify-between items-center px-4`}>
         <div className="flex justify-between w-full md:w-auto items-center">
           <Link to="/" className="flex items-center gap-1 font-semibold text-lg">
             <img src="/placeholder.svg" alt="Logo" className="w-8 h-8" />
@@ -56,8 +59,8 @@ const MainNavigation = () => {
           </Link>
 
           {/* Mobile Toggle Button */}
-          <button 
-            className="md:hidden p-1" 
+          <button
+            className="md:hidden p-1"
             onClick={() => setIsOpen(!isOpen)}
             aria-label={isOpen ? "Close Menu" : "Open Menu"}
           >
@@ -67,16 +70,16 @@ const MainNavigation = () => {
 
         {/* Navigation links */}
         <div className={`${isOpen ? "flex flex-col items-center mt-10 w-full" : "hidden md:flex"} gap-3 md:gap-4`}>
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className={`flex items-center gap-1 px-2 py-1 rounded ${location.pathname === '/' ? 'bg-white text-green-900' : 'hover:bg-white/20'}`}
           >
             <Home className="w-4 h-4" />
             <span>الرئيسية</span>
           </Link>
-          
-          <Link 
-            to="/vendors" 
+
+          <Link
+            to="/vendors"
             className={`flex items-center gap-1 px-2 py-1 rounded ${location.pathname === '/vendors' || location.pathname.startsWith('/store/') ? 'bg-white text-green-900' : 'hover:bg-white/20'}`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -88,38 +91,38 @@ const MainNavigation = () => {
             </svg>
             <span>المتاجر</span>
           </Link>
-          
-          <Link 
-            to="/contact" 
+
+          <Link
+            to="/contact"
             className={`flex items-center gap-1 px-2 py-1 rounded ${location.pathname === '/contact' ? 'bg-white text-green-900' : 'hover:bg-white/20'}`}
           >
             <Phone className="w-4 h-4" />
             <span>اتصل بنا</span>
           </Link>
-          
+
           {user && !isOnAdminPages && !isMobile && (
-            <Link 
-              to="/profile" 
+            <Link
+              to="/profile"
               className={`flex items-center gap-1 px-2 py-1 rounded ${isOnProfilePage ? 'bg-white text-green-900' : 'hover:bg-white/20'}`}
             >
               <User className="w-4 h-4" />
               <span>حسابي</span>
             </Link>
           )}
-          
+
           {user && !isOnAdminPages && !isMobile && (
-            <Link 
-              to="/favorites" 
+            <Link
+              to="/favorites"
               className={`flex items-center gap-1 px-2 py-1 rounded ${location.pathname === '/favorites' ? 'bg-white text-green-900' : 'hover:bg-white/20'}`}
             >
               <Heart className="w-4 h-4" />
               <span>المفضلة</span>
             </Link>
           )}
-          
+
           {user && !isOnAdminPages && !isMobile && (
-            <Link 
-              to="/cart" 
+            <Link
+              to="/cart"
               className={`flex items-center gap-1 px-2 py-1 rounded ${location.pathname === '/cart' ? 'bg-white text-green-900' : 'hover:bg-white/20'} relative`}
             >
               <ShoppingCart className="w-4 h-4" />
@@ -134,7 +137,14 @@ const MainNavigation = () => {
         </div>
 
         {/* Auth Buttons */}
-        <div className={`${isOpen ? "flex flex-col mt-8 w-full" : "hidden md:flex"} gap-2`}>
+        <div className={`${isOpen ? "flex flex-col mt-8 w-full" : "hidden md:flex"} gap-2 items-center`}>
+          {/* Language Switcher */}
+          <LanguageSwitcher
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-white/20 hover:text-white"
+          />
+
           {!user ? (
             <>
               <Link to="/login">

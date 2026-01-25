@@ -14,6 +14,7 @@ import { ProductCarousel } from '@/components/sections';
 import VendorAdCarousel from '@/components/vendor/VendorAdCarousel';
 import VendorStoreHeader from '@/components/vendor/VendorStoreHeader';
 import SEO from '@/components/SEO';
+import { useLanguageSafe } from '@/contexts/LanguageContext';
 
 const StorePage = () => {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ const StorePage = () => {
   // Get vendor context - NO MANUAL DETECTION
   // VendorContextProvider guarantees vendorId is available
   const { vendorId, vendorSlug, vendor } = useVendorContext();
+  const { t } = useLanguageSafe();
 
   // Vendor data hooks - use vendorId from context with pagination
   const { products, loading: productsLoading, loadingMore, hasMore, loadMore } = useVendorProducts(
@@ -100,7 +102,7 @@ const StorePage = () => {
             {bestSellers.length > 0 && (
               <div className="mb-8">
                 <ProductCarousel
-                  title="Best Sellers"
+                  title={t?.products?.bestSeller || "Best Sellers"}
                   products={bestSellers}
                   loading={bestSellersLoading}
                   showMoreLink={`/store/${vendorSlug}/section/best-sellers`}
@@ -115,7 +117,7 @@ const StorePage = () => {
             {lastViewed.length > 0 && (
               <div className="mb-8">
                 <ProductCarousel
-                  title="Recently Viewed"
+                  title="شوهد مؤخراً"
                   products={lastViewed}
                   loading={lastViewedLoading}
                 />
@@ -128,10 +130,10 @@ const StorePage = () => {
         <div className="mb-4">
           <h2 className="text-xl font-bold mb-4">
             {selectedSubcategory
-              ? childCategories.find(c => c.id === selectedSubcategory)?.name || 'Products'
+              ? childCategories.find(c => c.id === selectedSubcategory)?.name || (t?.products?.title || 'Products')
               : selectedCategory
-                ? mainCategories.find(c => c.id === selectedCategory)?.name || 'Products'
-                : 'All Products'}
+                ? mainCategories.find(c => c.id === selectedCategory)?.name || (t?.products?.title || 'Products')
+                : (t?.products?.allProducts || 'All Products')}
           </h2>
         </div>
 
@@ -146,13 +148,13 @@ const StorePage = () => {
             <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <h2 className="text-lg font-semibold mb-2">
               {searchQuery || selectedCategory
-                ? 'No matching products'
-                : 'No products in this store yet'}
+                ? (t?.products?.noProducts || 'No matching products')
+                : (t?.products?.noProducts || 'No products in this store yet')}
             </h2>
             <p className="text-muted-foreground mb-4">
               {searchQuery || selectedCategory
-                ? 'Try changing your search criteria'
-                : 'Products will be added soon'}
+                ? (t?.common?.noResults || 'Try changing search criteria')
+                : (t?.common?.noResults || 'Products coming soon')}
             </p>
             {(searchQuery || selectedCategory) && (
               <Button
@@ -162,7 +164,7 @@ const StorePage = () => {
                   setSelectedCategory(null);
                 }}
               >
-                Clear Filters
+                {t?.common?.cancel || 'Clear Filters'}
               </Button>
             )}
           </div>
@@ -185,10 +187,10 @@ const StorePage = () => {
                 {loadingMore ? (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>جاري التحميل...</span>
+                    <span>{t?.common?.loading || 'Loading...'}</span>
                   </div>
                 ) : (
-                  <span className="text-muted-foreground">التمرير لتحميل المزيد</span>
+                  <span className="text-muted-foreground">{t?.products?.viewMore || 'Scroll to load more'}</span>
                 )}
               </div>
             )}

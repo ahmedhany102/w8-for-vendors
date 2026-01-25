@@ -29,103 +29,103 @@ const ProductManagement = () => {
   const handleAddProduct = async (product: ProductFormData, saveVariants?: (productId: string) => Promise<boolean>) => {
     try {
       console.log('🆕 Starting product addition...', { hasVariantSaver: !!saveVariants });
-      
+
       const result = await addProduct(product);
-      
+
       if (result && typeof result === 'object' && result.id) {
         // If product was created successfully and we have variants to save
         if (saveVariants) {
           console.log('🎨 Saving variants for new product:', result.id);
           const variantResult = await saveVariants(result.id);
           if (!variantResult) {
-            toast.error('Product created but failed to save variants');
+            toast.error('تم إنشاء المنتج ولكن فشل حفظ الألوان');
           } else {
             console.log('✅ Variants saved successfully');
           }
         }
-        
+
         setShowAddDialog(false);
-        toast.success('Product added successfully!');
+        toast.success('تم إضافة المنتج بنجاح!');
         // Force a refetch to ensure UI updates
         setTimeout(() => {
           refetch();
         }, 200);
       } else {
-        toast.error('Failed to add product');
+        toast.error('فشل في إضافة المنتج');
       }
-      
+
     } catch (error: any) {
       console.error("❌ Error in handleAddProduct:", error);
-      toast.error("Failed to add product: " + (error?.message || 'Unknown error'));
+      toast.error("فشل في إضافة المنتج: " + (error?.message || 'خطأ غير معروف'));
     }
   };
 
   const handleEditProduct = async (product: ProductFormData, saveVariants?: (productId: string) => Promise<boolean>) => {
     if (!editProduct?.id) {
-      toast.error('No product selected for editing');
+      toast.error('لم يتم اختيار منتج للتعديل');
       return;
     }
-    
+
     try {
       console.log('✏️ Starting product update...', { hasVariantSaver: !!saveVariants });
-      
+
       const result = await updateProduct(editProduct.id, product);
-      
+
       if (result) {
         // If product was updated successfully and we have variants to save
         if (saveVariants) {
           console.log('🎨 Saving variants for updated product:', editProduct.id);
           const variantResult = await saveVariants(editProduct.id);
           if (!variantResult) {
-            toast.error('Product updated but failed to save variants');
+            toast.error('تم تحديث المنتج ولكن فشل حفظ الألوان');
           } else {
             console.log('✅ Variants saved successfully');
           }
         }
-        
+
         setShowEditDialog(false);
         setEditProduct(null);
-        toast.success('Product updated successfully!');
+        toast.success('تم تحديث المنتج بنجاح!');
         // Force a refetch to ensure UI updates
         setTimeout(() => {
           refetch();
         }, 200);
       } else {
-        toast.error('Failed to update product');
+        toast.error('فشل في تحديث المنتج');
       }
-      
+
     } catch (error: any) {
       console.error("❌ Error in handleEditProduct:", error);
-      toast.error("Failed to update product: " + (error?.message || 'Unknown error'));
+      toast.error("فشل في تحديث المنتج: " + (error?.message || 'خطأ غير معروف'));
     }
   };
 
   const handleDeleteProduct = async () => {
     if (!deleteProductId) {
-      toast.error('No product selected for deletion');
+      toast.error('لم يتم اختيار منتج للحذف');
       return;
     }
-    
+
     try {
       console.log('🗑️ Starting product deletion...');
-      
+
       const result = await deleteProduct(deleteProductId);
-      
+
       if (result) {
         setShowDeleteDialog(false);
         setDeleteProductId(null);
-        toast.success('Product deleted successfully!');
+        toast.success('تم حذف المنتج بنجاح!');
         // Force a refetch to ensure UI updates
         setTimeout(() => {
           refetch();
         }, 200);
       } else {
-        toast.error('Failed to delete product');
+        toast.error('فشل في حذف المنتج');
       }
-      
+
     } catch (error: any) {
       console.error("❌ Error in handleDeleteProduct:", error);
-      toast.error("Failed to delete product: " + (error?.message || 'Unknown error'));
+      toast.error("فشل في حذف المنتج: " + (error?.message || 'خطأ غير معروف'));
     }
   };
 
@@ -160,7 +160,7 @@ const ProductManagement = () => {
         <div className="flex justify-center items-center py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-800 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading products...</p>
+            <p className="text-gray-600">جاري تحميل المنتجات...</p>
           </div>
         </div>
       </div>
@@ -177,16 +177,16 @@ const ProductManagement = () => {
         onAddProduct={() => setShowAddDialog(true)}
         totalProducts={products.length}
       />
-      
+
       <ProductManagementStats totalProducts={products.length} />
-      
+
       <ProductManagementTable
         products={filteredProducts}
         loading={false} // We handle loading at the component level
         onEditProduct={handleEditClick}
         onDeleteProduct={handleDeleteClick}
       />
-      
+
       <ProductManagementDialogs
         showAddDialog={showAddDialog}
         setShowAddDialog={setShowAddDialog}

@@ -38,8 +38,8 @@ import './App.css';
 import './autoScroll.css';
 import BottomNavigation from './components/BottomNavigation';
 import ScrollToTop from './components/ScrollToTop';
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { LanguageProvider } from './contexts/LanguageContext';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -54,12 +54,14 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <ScrollToTop />
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
-      </Router>
+      <LanguageProvider>
+        <Router>
+          <ScrollToTop />
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </Router>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

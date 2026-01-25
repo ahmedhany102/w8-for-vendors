@@ -8,15 +8,15 @@ const signupRateLimit = createRateLimiter(3, 60 * 60 * 1000); // 3 attempts per 
 
 export const secureLogin = async (email: string, password: string): Promise<boolean> => {
   const identifier = `login_${email}`;
-  
+
   if (!loginRateLimit(identifier)) {
-    toast.error('Too many login attempts. Please try again later.');
+    toast.error('محاولات تسجيل دخول كثيرة. يرجى المحاولة لاحقاً.');
     return false;
   }
 
   try {
     console.log('🔐 Attempting secure login for:', email);
-    
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.toLowerCase().trim(),
       password
@@ -24,14 +24,14 @@ export const secureLogin = async (email: string, password: string): Promise<bool
 
     if (error) {
       console.error('❌ Login error:', error);
-      toast.error(error.message || 'Login failed');
+      toast.error(error.message || 'فشل تسجيل الدخول');
       return false;
     }
 
     if (data.session && data.user) {
       // Check if user is banned IMMEDIATELY after login
       console.log('🔍 Checking ban status for user:', data.user.id);
-      
+
       const { data: canAuth, error: authCheckError } = await supabase.rpc('can_user_authenticate', {
         _user_id: data.user.id
       });
@@ -39,7 +39,7 @@ export const secureLogin = async (email: string, password: string): Promise<bool
       if (authCheckError) {
         console.error('❌ Auth check error:', authCheckError);
         await supabase.auth.signOut();
-        toast.error('Authentication validation failed');
+        toast.error('فشل التحقق من الحساب');
         return false;
       }
 
@@ -51,29 +51,29 @@ export const secureLogin = async (email: string, password: string): Promise<bool
       }
 
       console.log('✅ Login successful - user is active');
-      toast.success('Login successful!');
+      toast.success('تم تسجيل الدخول بنجاح!');
       return true;
     }
 
     return false;
   } catch (error: any) {
     console.error('💥 Login exception:', error);
-    toast.error('Login failed');
+    toast.error('فشل تسجيل الدخول');
     return false;
   }
 };
 
 export const secureSignup = async (email: string, password: string, name: string): Promise<boolean> => {
   const identifier = `signup_${email}`;
-  
+
   if (!signupRateLimit(identifier)) {
-    toast.error('Too many signup attempts. Please try again later.');
+    toast.error('محاولات تسجيل كثيرة. يرجى المحاولة لاحقاً.');
     return false;
   }
 
   try {
     console.log('📝 Attempting secure signup for:', email);
-    
+
     const { data, error } = await supabase.auth.signUp({
       email: email.toLowerCase().trim(),
       password,
@@ -84,19 +84,19 @@ export const secureSignup = async (email: string, password: string, name: string
 
     if (error) {
       console.error('❌ Signup error:', error);
-      toast.error(error.message || 'Signup failed');
+      toast.error(error.message || 'فشل إنشاء الحساب');
       return false;
     }
 
     if (data.user) {
-      toast.success('Account created successfully!');
+      toast.success('تم إنشاء الحساب بنجاح!');
       return true;
     }
 
     return false;
   } catch (error: any) {
     console.error('💥 Signup exception:', error);
-    toast.error('Signup failed');
+    toast.error('فشل إنشاء الحساب');
     return false;
   }
 };
@@ -155,12 +155,12 @@ export const getUserHighestRole = async (userId: string): Promise<string> => {
 export const secureLogout = async (): Promise<void> => {
   try {
     console.log('🚪 Secure logout...');
-    
+
     // Sign out from Supabase - this clears the session properly
     await supabase.auth.signOut();
-    
+
     console.log('✅ Secure logout completed');
-    toast.success('Logged out successfully');
+    toast.success('تم تسجيل الخروج بنجاح');
   } catch (error: any) {
     console.warn('⚠️ Logout exception:', error);
     // Try to sign out again if there was an error
@@ -169,6 +169,6 @@ export const secureLogout = async (): Promise<void> => {
     } catch (e) {
       // Ignore
     }
-    toast.success('Logged out successfully');
+    toast.success('تم تسجيل الخروج بنجاح');
   }
 };

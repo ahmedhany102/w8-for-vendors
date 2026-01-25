@@ -3,11 +3,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, ShoppingCart, User, Package, Heart, Store } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguageSafe } from '@/contexts/LanguageContext';
 import CartDatabase from "@/models/CartDatabase";
 
 const BottomNavigation: React.FC = () => {
   const location = useLocation();
   const { user, isVendor } = useAuth();
+  const { t, direction } = useLanguageSafe();
   const [cartItemCount, setCartItemCount] = useState(0);
 
   // ===========================================
@@ -108,7 +110,7 @@ const BottomNavigation: React.FC = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-lg z-50">
-      <div className="flex justify-between items-center">
+      <div className={`flex ${direction === 'rtl' ? 'flex-row-reverse' : 'flex-row'} justify-between items-center`}>
         {/* Home - vendor-scoped when in vendor context */}
         <Link
           to={homeLink}
@@ -116,7 +118,7 @@ const BottomNavigation: React.FC = () => {
             }`}
         >
           <Home className="w-5 h-5" />
-          <span className="text-xs">{isVendorContext ? 'المتجر' : 'الرئيسية'}</span>
+          <span className="text-xs">{isVendorContext ? (t?.vendor?.myStore || 'المتجر') : (t?.nav?.home || 'الرئيسية')}</span>
         </Link>
 
         {/* Cart - vendor-scoped when in vendor context */}
@@ -131,7 +133,7 @@ const BottomNavigation: React.FC = () => {
               {cartItemCount}
             </span>
           )}
-          <span className="text-xs">العربة</span>
+          <span className="text-xs">{t?.nav?.cart || 'العربة'}</span>
         </Link>
 
         {/* Favorites - vendor-scoped when in vendor context */}
@@ -142,7 +144,7 @@ const BottomNavigation: React.FC = () => {
               }`}
           >
             <Heart className="w-5 h-5" />
-            <span className="text-xs">المفضلة</span>
+            <span className="text-xs">{t?.nav?.favorites || 'المفضلة'}</span>
           </Link>
         )}
 
@@ -154,7 +156,7 @@ const BottomNavigation: React.FC = () => {
               }`}
           >
             <Store className="w-5 h-5" />
-            <span className="text-xs">متجري</span>
+            <span className="text-xs">{t?.vendor?.myStore || 'متجري'}</span>
           </Link>
         )}
 
@@ -165,7 +167,7 @@ const BottomNavigation: React.FC = () => {
             }`}
         >
           <User className="w-5 h-5" />
-          <span className="text-xs">حسابي</span>
+          <span className="text-xs">{t?.nav?.profile || 'حسابي'}</span>
         </Link>
 
         {/* Orders - vendor-scoped when in vendor context */}
@@ -175,7 +177,7 @@ const BottomNavigation: React.FC = () => {
             }`}
         >
           <Package className="w-5 h-5" />
-          <span className="text-xs">طلباتي</span>
+          <span className="text-xs">{t?.nav?.orders || 'طلباتي'}</span>
         </Link>
       </div>
     </div>

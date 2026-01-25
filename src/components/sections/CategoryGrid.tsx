@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCategories } from '@/hooks/useCategories';
 import { useVendorContext } from '@/hooks/useVendorContext';
+import { useLanguageSafe } from '@/contexts/LanguageContext';
 
 interface CategoryGridProps {
   title?: string;
@@ -24,6 +25,7 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
 
   // Get vendor context for vendor-scoped navigation
   const { isVendorContext, vendorSlug } = useVendorContext();
+  const { t, direction } = useLanguageSafe();
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -51,7 +53,7 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
   if (loading) {
     return (
       <div className="mb-8">
-        <h2 className="text-lg md:text-xl font-bold mb-4">{title}</h2>
+        <h2 className="text-lg md:text-xl font-bold mb-4 text-start">{t?.products?.browseCategories || title}</h2>
         <div className="flex gap-4 overflow-hidden">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
@@ -69,21 +71,21 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({
   if (displayCategories.length === 0) return null;
 
   return (
-    <div className="mb-8">
-      {/* Header */}
+    <div dir={direction} className="mb-8">
+      {/* Header - uses dir from this container for proper RTL/LTR layout */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg md:text-xl font-bold">{title}</h2>
+        <h2 className="text-lg md:text-xl font-bold">{t?.products?.browseCategories || title}</h2>
         <div className="hidden md:flex gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => scroll('right')}>
-            <ChevronRight className="w-4 h-4" />
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => scroll(direction === 'rtl' ? 'left' : 'right')}>
+            {direction === 'rtl' ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => scroll('left')}>
-            <ChevronLeft className="w-4 h-4" />
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => scroll(direction === 'rtl' ? 'right' : 'left')}>
+            {direction === 'rtl' ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </Button>
         </div>
       </div>
 
-      {/* Categories Carousel */}
+      {/* Categories Carousel - uses flex with natural order, dir handles mirroring */}
       <div
         ref={scrollRef}
         className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide pb-2"

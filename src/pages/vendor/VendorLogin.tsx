@@ -80,7 +80,7 @@ const VendorLogin = () => {
             }
         } catch (error) {
             console.error('Login submission error:', error);
-            toast.error('Login failed. Please try again.');
+            toast.error('فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.');
         } finally {
             setIsSubmitting(false);
         }

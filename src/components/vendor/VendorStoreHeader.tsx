@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useCartIntegration } from '@/hooks/useCartIntegration';
 import { useVendorContext } from '@/hooks/useVendorContext';
+import { useLanguageSafe } from '@/contexts/LanguageContext';
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import VendorCategoryMenu from './VendorCategoryMenu';
 
 interface Category {
@@ -51,6 +53,7 @@ const VendorStoreHeader: React.FC<VendorStoreHeaderProps> = ({
 
     // Get vendor data from context
     const { vendor, vendorSlug } = useVendorContext();
+    const { t } = useLanguageSafe();
 
     const handleCategorySelect = (categoryId: string | null, subcategoryId: string | null) => {
         setMenuOpen(false);
@@ -105,7 +108,7 @@ const VendorStoreHeader: React.FC<VendorStoreHeaderProps> = ({
                                     <Search className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                     <Input
                                         type="text"
-                                        placeholder={`ابحث في ${vendorName}...`}
+                                        placeholder={`${t?.common?.search || 'Search'} ${vendorName}...`}
                                         value={searchQuery}
                                         onChange={(e) => onSearchChange(e.target.value)}
                                         className="h-9 pr-10 rtl:pr-4 rtl:pl-10 text-sm"
@@ -172,6 +175,9 @@ const VendorStoreHeader: React.FC<VendorStoreHeaderProps> = ({
                                     </Badge>
                                 )}
                             </Button>
+
+                            {/* Language Switcher */}
+                            <LanguageSwitcher />
                         </div>
                     </div>
                 </div>

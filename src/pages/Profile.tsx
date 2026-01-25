@@ -113,7 +113,7 @@ const Profile = () => {
       if (error) {
         toast.error("Password update failed: " + error.message);
       } else {
-        toast.success("Password updated successfully");
+        toast.success("تم تحديث كلمة المرور بنجاح");
         setIsPasswordModalOpen(false);
         form.reset();
       }
@@ -206,25 +206,25 @@ const Profile = () => {
       )}
 
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold mb-6">User Profile</h1>
+        <h1 className="text-2xl font-bold mb-6">الملف الشخصي</h1>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>User Information</CardTitle>
-            <CardDescription>Your account details</CardDescription>
+            <CardTitle>معلومات الحساب</CardTitle>
+            <CardDescription>تفاصيل حسابك</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium text-gray-500">Email</p>
+                <p className="text-sm font-medium text-gray-500">البريد الإلكتروني</p>
                 <p>{user.email}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Role</p>
+                <p className="text-sm font-medium text-gray-500">نوع الحساب</p>
                 <p className="capitalize">{user.role.replace('ROLE_', '')}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Account ID</p>
+                <p className="text-sm font-medium text-gray-500">رقم الحساب</p>
                 <p>{user.id}</p>
               </div>
             </div>
@@ -233,8 +233,8 @@ const Profile = () => {
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Manage your account and orders</CardDescription>
+            <CardTitle>إجراءات سريعة</CardTitle>
+            <CardDescription>إدارة حسابك وطلباتك</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -243,14 +243,14 @@ const Profile = () => {
                 onClick={() => setIsPasswordModalOpen(true)}
                 className="hover:bg-green-100"
               >
-                Change Password
+                تغيير كلمة المرور
               </Button>
               <Button
                 variant="outline"
                 onClick={handleViewOrders}
                 className="hover:bg-green-100"
               >
-                View My Orders
+                عرض طلباتي
               </Button>
             </div>
           </CardContent>
@@ -259,8 +259,8 @@ const Profile = () => {
         {/* Logout Button */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Session</CardTitle>
-            <CardDescription>Manage your login session</CardDescription>
+            <CardTitle>الجلسة</CardTitle>
+            <CardDescription>إدارة جلسة الدخول</CardDescription>
           </CardHeader>
           <CardContent>
             <Button
@@ -269,8 +269,8 @@ const Profile = () => {
               disabled={isLoggingOut}
               className="w-full md:w-auto"
             >
-              <LogOut className="w-4 h-4 mr-2" />
-              {isLoggingOut ? 'Logging out...' : 'Logout'}
+              <LogOut className="w-4 h-4 ml-2" />
+              {isLoggingOut ? 'جاري تسجيل الخروج...' : 'تسجيل خروج'}
             </Button>
           </CardContent>
         </Card>
@@ -280,9 +280,9 @@ const Profile = () => {
       <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Change Password</DialogTitle>
+            <DialogTitle>تغيير كلمة المرور</DialogTitle>
             <DialogDescription>
-              Enter your current password and choose a new password for your account.
+              أدخل كلمة المرور الحالية واختر كلمة مرور جديدة لحسابك.
             </DialogDescription>
           </DialogHeader>
 
@@ -293,11 +293,11 @@ const Profile = () => {
                 name="currentPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Current Password</FormLabel>
+                    <FormLabel>كلمة المرور الحالية</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="Enter your current password"
+                        placeholder="أدخل كلمة المرور الحالية"
                         {...field}
                         disabled={isUpdatingPassword}
                       />
@@ -312,11 +312,11 @@ const Profile = () => {
                 name="newPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>New Password</FormLabel>
+                    <FormLabel>كلمة المرور الجديدة</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="Create a new password"
+                        placeholder="أنشئ كلمة مرور جديدة"
                         {...field}
                         disabled={isUpdatingPassword}
                       />
@@ -331,11 +331,11 @@ const Profile = () => {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm New Password</FormLabel>
+                    <FormLabel>تأكيد كلمة المرور الجديدة</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="Confirm your new password"
+                        placeholder="أكد كلمة المرور الجديدة"
                         {...field}
                         disabled={isUpdatingPassword}
                       />
@@ -352,7 +352,7 @@ const Profile = () => {
                   onClick={() => setIsPasswordModalOpen(false)}
                   disabled={isUpdatingPassword}
                 >
-                  Cancel
+                  إلغاء
                 </Button>
                 <Button
                   type="submit"
@@ -362,10 +362,10 @@ const Profile = () => {
                   {isUpdatingPassword ? (
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Updating...
+                      جاري التحديث...
                     </div>
                   ) : (
-                    "Update Password"
+                    "تحديث كلمة المرور"
                   )}
                 </Button>
               </DialogFooter>

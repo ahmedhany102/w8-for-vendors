@@ -20,6 +20,7 @@ import { useVendorContext } from '@/hooks/useVendorContext';
 import { useVendorCategories } from '@/hooks/useVendors';
 import VendorStoreHeader from '@/components/vendor/VendorStoreHeader';
 import SEO from '@/components/SEO';
+import { useLanguageSafe } from '@/contexts/LanguageContext';
 
 interface Product {
   id: string;
@@ -57,6 +58,7 @@ const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t, direction } = useLanguageSafe();
   const { addToCart } = useCartIntegration();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -428,11 +430,11 @@ const ProductDetails = () => {
       const success = await addToCart(productForCart, cartSize, cartColor, quantity, discountedPrice);
 
       if (success) {
-        toast.success('تمت الإضافة إلى العربة');
+        toast.success(t?.products?.addedToCart || 'Added to cart');
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
-      toast.error('حدث خطأ أثناء إضافة المنتج للعربة');
+      toast.error(t?.products?.addToCartError || 'Error adding to cart');
     } finally {
       setAddingToCart(false);
     }
@@ -440,11 +442,11 @@ const ProductDetails = () => {
 
   const displayStockMessage = (stock: number) => {
     if (stock === 0) {
-      return <Badge variant="destructive">نفذت الكمية</Badge>;
+      return <Badge variant="destructive">{t?.products?.outOfStock || 'Out of Stock'}</Badge>;
     } else if (stock === 1) {
-      return <Badge variant="destructive">بقي قطعة واحدة فقط!</Badge>;
+      return <Badge variant="destructive">{t?.products?.lastOne || 'Only 1 left!'}</Badge>;
     } else if (stock <= 5) {
-      return <Badge variant="outline" className="text-yellow-600 border-yellow-600">بقي {stock} قطع فقط</Badge>;
+      return <Badge variant="outline" className="text-yellow-600 border-yellow-600">{(t?.products?.fewLeft || 'Only {count} left').replace('{count}', String(stock))}</Badge>;
     }
     return null;
   };
@@ -540,7 +542,7 @@ const ProductDetails = () => {
         />
       )}
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8" style={{ direction: direction }}>
           {/* Product Images */}
           <div>
             <div
@@ -753,7 +755,7 @@ const ProductDetails = () => {
           {/* Similar Products */}
           {similarProducts.length > 0 && (
             <RecommendationCarousel
-              title="منتجات مشابهة"
+              title={t?.products?.similarProducts || "Similar Products"}
               products={similarProducts}
               loading={similarLoading}
               icon={<Sparkles className="w-5 h-5" />}
@@ -766,7 +768,7 @@ const ProductDetails = () => {
             <>
               <Separator className="my-6" />
               <RecommendationCarousel
-                title="المزيد من هذا المتجر"
+                title={t?.products?.moreFromStore || "More from this Store"}
                 products={moreFromVendor}
                 loading={moreFromVendorLoading}
                 icon={<Store className="w-5 h-5" />}
@@ -777,7 +779,7 @@ const ProductDetails = () => {
                     navigate(`/store/${vendorSlug}`);
                   }
                 }}
-                showMoreLabel="زيارة المتجر"
+                showMoreLabel={t?.products?.visitStore || "Visit Store"}
               />
             </>
           )}

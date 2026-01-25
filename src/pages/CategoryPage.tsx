@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Package } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import VendorStoreHeader from '@/components/vendor/VendorStoreHeader';
+import { useLanguageSafe } from '@/contexts/LanguageContext';
 
 const CategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -40,6 +41,7 @@ const CategoryPage = () => {
 
   // Get vendor context - NO MANUAL DETECTION
   const { isVendorContext, vendorId, vendorSlug } = useVendorContext();
+  const { t } = useLanguageSafe();
 
   // Only fetch vendor categories when in vendor context
   const { mainCategories, subcategories: vendorSubcategories } = useVendorCategories(vendorId);
@@ -155,11 +157,11 @@ const CategoryPage = () => {
         )}
         <div className="container mx-auto px-4 py-8 text-center">
           <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-          <h1 className="text-2xl font-bold mb-2">الفئة غير موجودة</h1>
-          <p className="text-gray-600 mb-6">الفئة التي تبحث عنها غير متوفرة</p>
+          <h1 className="text-2xl font-bold mb-2">{t?.common?.noResults || 'Category Not Found'}</h1>
+          <p className="text-gray-600 mb-6">{t?.products?.noProducts || 'The category you are looking for is not available'}</p>
           <Button onClick={handleBack} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            {isVendorContext ? 'العودة للمتجر' : 'العودة للرئيسية'}
+            {isVendorContext ? (t?.common?.backToHome || 'Back to Store') : (t?.common?.backToHome || 'Back to Home')}
           </Button>
         </div>
       </Layout>
@@ -197,7 +199,7 @@ const CategoryPage = () => {
                 onClick={handleBack}
                 className="p-0 h-auto font-normal text-primary hover:text-primary/80"
               >
-                {isVendorContext ? 'المتجر' : 'الرئيسية'}
+                {isVendorContext ? (t?.products?.vendor || 'Store') : (t?.nav?.home || 'Home')}
               </Button>
             </BreadcrumbItem>
             <BreadcrumbSeparator />

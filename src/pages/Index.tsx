@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import ProductCatalog from '@/components/ProductCatalog';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguageSafe } from '@/contexts/LanguageContext';
 import { Loader } from '@/components/ui/loader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Store, ShoppingBag } from 'lucide-react';
@@ -11,6 +12,7 @@ import SEO from '@/components/SEO';
 
 const Index = () => {
   const { user, loading } = useAuth();
+  const { t, direction } = useLanguageSafe();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState<'home' | 'products'>('home');
 
@@ -37,58 +39,61 @@ const Index = () => {
       <div className="container mx-auto px-4 py-6">
         {/* Hero Section for Guest Users - Speed-focused branding */}
         {!user && (
-          <div className="mb-8 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-2xl p-6 md:p-10 text-center md:text-right">
+          <div dir={direction} className="mb-8 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-2xl p-6 md:p-10 flex flex-col justify-center items-start text-start">
             <h1 className="text-2xl md:text-4xl font-bold mb-3">
-              انطلق وابدأ البيع في <span className="text-primary">30 ثانية</span> فقط
+              {t?.hero?.title || 'Launch and Sell'} <span className="text-primary">{t?.hero?.subtitle || 'in just 30 seconds'}</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-2">
-              Launch and Sell in <span className="text-primary font-bold">30 Seconds</span>
-            </p>
             <p className="text-muted-foreground mb-6">
-              مع سرعلي - أسرع طريقة لإنشاء متجرك الإلكتروني
+              {direction === 'rtl'
+                ? 'مع سرعلي - أسرع طريقة لإنشاء متجرك الإلكتروني'
+                : 'With Sarraly - The fastest way to build your online store'}
             </p>
             <a
               href="/become-vendor"
               className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-bold transition-colors"
             >
               <Store className="w-5 h-5" />
-              امتلك متجرك الإلكتروني الآن
+              {t?.hero?.cta || 'Get Your Online Store Now'}
             </a>
           </div>
         )}
 
         {/* Greeting Section for Logged-in Users */}
         {user && (
-          <div className="mb-6">
-            <h2 className="text-xl font-bold mb-2">أهلاً بك {user.name}!</h2>
-            <p className="text-muted-foreground">نتمنى لك تجربة تسوق ممتعة</p>
+          <div dir={direction} className="mb-6">
+            <h2 className="text-xl font-bold mb-2">{t?.hero?.welcome || 'Welcome'} {user.name}!</h2>
+            <p className="text-muted-foreground">
+              {direction === 'rtl' ? 'نتمنى لك تجربة تسوق ممتعة' : 'Enjoy your shopping experience'}
+            </p>
           </div>
         )}
 
         {/* Tab Navigation */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="mb-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
-            <TabsTrigger value="home" className="flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4" />
-              الرئيسية
-            </TabsTrigger>
-            <TabsTrigger value="products" className="flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4" />
-              المنتجات
-            </TabsTrigger>
-            {/* Stores tab navigates to /vendors page */}
-            <TabsTrigger
-              value="vendors"
-              className="flex items-center gap-2"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate('/vendors');
-              }}
-            >
-              <Store className="w-4 h-4" />
-              المتاجر
-            </TabsTrigger>
-          </TabsList>
+          <div dir={direction} className="flex w-full">
+            <TabsList className="grid grid-cols-3 w-full max-w-md">
+              <TabsTrigger value="home" className="flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4" />
+                {t?.nav?.home || 'Home'}
+              </TabsTrigger>
+              <TabsTrigger value="products" className="flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4" />
+                {t?.nav?.products || 'Products'}
+              </TabsTrigger>
+              {/* Stores tab navigates to /vendors page */}
+              <TabsTrigger
+                value="vendors"
+                className="flex items-center gap-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate('/vendors');
+                }}
+              >
+                <Store className="w-4 h-4" />
+                {t?.nav?.stores || 'Stores'}
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="home" className="mt-6">
             {/* Dynamic Sections from Database - Admin Controlled */}

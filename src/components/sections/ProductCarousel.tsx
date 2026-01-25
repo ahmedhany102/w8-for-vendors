@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import CartDatabase from '@/models/CartDatabase';
 import { useVendorContext } from '@/hooks/useVendorContext';
 import { useBulkProductVariants } from '@/hooks/useBulkProductVariants';
+import { useLanguageSafe } from '@/contexts/LanguageContext';
 
 // 🔴 Image optimization helper to reduce Supabase egress
 const getOptimizedUrl = (
@@ -44,6 +45,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { t, direction } = useLanguageSafe();
 
   // Get vendor context for vendor-scoped navigation
   const { isVendorContext, vendorSlug } = useVendorContext();
@@ -116,10 +118,10 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
       });
 
       await cartDb.addToCart(productForCart as any, '', '', 1);
-      toast.success('تم إضافة المنتج إلى السلة');
+      toast.success(t?.cart?.addedToCart || 'تم إضافة المنتج إلى السلة');
     } catch (error) {
       console.error('Error adding to cart:', error);
-      toast.error('فشل في إضافة المنتج');
+      toast.error(t?.common?.error || 'فشل في إضافة المنتج');
     }
   };
 
@@ -181,7 +183,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
   const styles = getVariantStyles();
 
   return (
-    <div className="mb-8">
+    <div dir={direction} className="mb-8">
       <div
         className={`flex items-center justify-between mb-4 p-3 rounded-lg ${styles.headerBg}`}
         style={styles.headerStyle}
@@ -198,8 +200,8 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
               onClick={() => navigate(showMoreLink)}
               className="flex items-center gap-1"
             >
-              عرض المزيد
-              <ArrowLeft className="w-4 h-4" />
+              {t?.products?.viewMore || 'View More'}
+              {direction === 'rtl' ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </Button>
           )}
           <div className="hidden md:flex gap-1">
@@ -227,7 +229,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
       <div
         ref={scrollRef}
         className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 items-stretch"
-        style={{ scrollSnapType: 'x mandatory' }}
+        style={{ scrollSnapType: 'x mandatory', direction: direction }}
       >
         {products.map((product) => {
           const finalPrice = product.discount
@@ -268,7 +270,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                 {/* Discount Badge */}
                 {product.discount && product.discount > 0 && (
                   <Badge className="absolute top-2 right-2 bg-red-500 text-white text-xs">
-                    {product.discount}% خصم
+                    {product.discount}% {t?.products?.discount || 'خصم'}
                   </Badge>
                 )}
 
@@ -276,14 +278,14 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                 {variant === 'best_seller' && (
                   <Badge className="absolute top-2 left-2 bg-amber-500 text-white text-xs flex items-center gap-1">
                     <Star className="w-3 h-3" fill="currentColor" />
-                    الأكثر مبيعاً
+                    {t?.products?.bestSeller || 'الأكثر مبيعاً'}
                   </Badge>
                 )}
 
                 {/* Out of Stock Overlay */}
                 {isOutOfStock && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <span className="text-white font-bold">غير متوفر</span>
+                    <span className="text-white font-bold">{t?.products?.outOfStock || 'غير متوفر'}</span>
                   </div>
                 )}
               </div>
@@ -298,12 +300,12 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                 <div className="flex flex-wrap gap-1 mb-1 min-h-[22px]">
                   {product.is_free_shipping && (
                     <span className="inline-flex items-center text-xs text-primary font-medium">
-                      🚚 شحن مجاني
+                      🚚 {t?.products?.freeShipping || 'شحن مجاني'}
                     </span>
                   )}
                   {product.is_fast_shipping && (
                     <span className="inline-flex items-center text-xs text-amber-500 font-medium">
-                      ⚡ شحن سريع
+                      ⚡ {t?.products?.fastDelivery || 'شحن سريع'}
                     </span>
                   )}
                 </div>
@@ -311,7 +313,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                 {/* Color Swatches from Variants */}
                 {variantsByProduct[product.id] && variantsByProduct[product.id].length > 0 && (
                   <div className="flex items-center gap-1 mb-1">
-                    <span className="text-xs text-muted-foreground">الألوان:</span>
+                    <span className="text-xs text-muted-foreground">{t?.products?.colors || 'الألوان'}:</span>
                     <div className="flex gap-1">
                       {variantsByProduct[product.id].slice(0, 4).map((variant) => {
                         const isSelected = selectedImages[product.id] === variant.image_url;
@@ -320,8 +322,8 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                             key={variant.id}
                             onClick={(e) => handleSwatchClick(e, product.id, variant.image_url || product.image_url || '')}
                             className={`w-5 h-5 rounded-full overflow-hidden transition-all ${isSelected
-                                ? 'ring-2 ring-primary ring-offset-1 scale-110'
-                                : 'border border-gray-300 hover:scale-110'
+                              ? 'ring-2 ring-primary ring-offset-1 scale-110'
+                              : 'border border-gray-300 hover:scale-110'
                               }`}
                             title={variant.label}
                           >
@@ -354,7 +356,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                       onClick={(e) => handleVendorClick(e, product.vendor_slug)}
                       className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
                     >
-                      بواسطة: {product.vendor_name}
+                      {t?.products?.soldBy || 'بواسطة'}: {product.vendor_name}
                     </button>
                   )}
                 </div>
@@ -365,7 +367,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                 {/* Price */}
                 <div className="flex items-center gap-2 w-full">
                   <span className="font-bold text-primary">
-                    {finalPrice.toFixed(0)} ج.م
+                    {finalPrice.toFixed(0)} {t?.common?.currency || 'ج.م'}
                   </span>
                   {product.discount && product.discount > 0 && (
                     <span className="text-xs text-muted-foreground line-through">
@@ -381,7 +383,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                   disabled={isOutOfStock}
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  {isOutOfStock ? 'غير متوفر' : 'أضف للسلة'}
+                  {isOutOfStock ? (t?.products?.outOfStock || 'غير متوفر') : (t?.products?.addToCart || 'أضف للسلة')}
                 </Button>
               </CardFooter>
             </Card>

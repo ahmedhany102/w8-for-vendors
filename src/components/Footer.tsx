@@ -5,18 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useSupabaseContactSettings } from '@/hooks/useSupabaseContactSettings';
+import { useLanguageSafe } from '@/contexts/LanguageContext';
 
 const Footer = () => {
   const [email, setEmail] = useState('');
   const { settings } = useSupabaseContactSettings();
+  const { t, direction } = useLanguageSafe();
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      toast.error('Please enter your email');
+      toast.error(direction === 'rtl' ? 'من فضلك أدخل بريدك الإلكتروني' : 'Please enter your email');
       return;
     }
-    toast.success('Thanks for subscribing!');
+    toast.success(t?.footer?.thankYou || 'Thank you for subscribing!');
     setEmail('');
   };
 
@@ -32,7 +34,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
 
           {/* Column 1: Brand Info */}
-          <div className="text-right">
+          <div className="text-start">
             <Link to="/" className="inline-block mb-4">
               <img
                 src="/logo.png"
@@ -41,11 +43,9 @@ const Footer = () => {
               />
             </Link>
             <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-              منصة سرعلي - بوابتك لعالم التجارة الإلكترونية المتكامل.
-              <br />
-              ابدأ، بع، وانمُ بلا حدود.
+              {t?.footer?.brandDesc || 'Sarraly Platform - Your gateway to integrated e-commerce. Start, sell, and grow without limits.'}
             </p>
-            <div className="flex gap-3 justify-end">
+            <div className={`flex gap-3 ${direction === 'rtl' ? 'justify-end' : 'justify-start'}`}>
               {facebookUrl && (
                 <a
                   href={facebookUrl}
@@ -80,81 +80,82 @@ const Footer = () => {
           </div>
 
           {/* Column 2: Quick Links */}
-          <div className="text-right">
-            <h3 className="font-bold text-gray-900 text-lg mb-4">روابط سريعة</h3>
+          <div className="text-start">
+            <h3 className="font-bold text-gray-900 text-lg mb-4">{t?.footer?.quickLinks || 'Quick Links'}</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/" className="text-gray-600 hover:text-primary transition-colors text-sm">
-                  الصفحة الرئيسية
+                  {t?.footer?.home || 'Home'}
                 </Link>
               </li>
               <li>
                 <Link to="/section/best-seller-1" className="text-gray-600 hover:text-primary transition-colors text-sm">
-                  الأفضل مبيعاً
+                  {t?.footer?.bestSeller || 'Best Sellers'}
                 </Link>
               </li>
               <li>
                 <Link to="/vendors" className="text-gray-600 hover:text-primary transition-colors text-sm">
-                  المتاجر
+                  {t?.footer?.stores || 'Stores'}
                 </Link>
               </li>
               <li>
                 <Link to="/become-vendor" className="text-gray-600 hover:text-primary transition-colors text-sm">
-                  امتلك متجرك
+                  {t?.footer?.getYourStore || 'Get Your Store'}
                 </Link>
               </li>
             </ul>
           </div>
 
           {/* Column 3: Customer Care */}
-          <div className="text-right">
-            <h3 className="font-bold text-gray-900 text-lg mb-4">خدمة العملاء</h3>
+          <div className="text-start">
+            <h3 className="font-bold text-gray-900 text-lg mb-4">{t?.footer?.customerService || 'Customer Service'}</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/contact" className="text-gray-600 hover:text-primary transition-colors text-sm">
-                  اتصل بنا
+                  {t?.footer?.contactUs || 'Contact Us'}
                 </Link>
               </li>
               <li>
                 <Link to="/policy/shipping" className="text-gray-600 hover:text-primary transition-colors text-sm">
-                  سياسة الشحن
+                  {t?.footer?.shippingPolicy || 'Shipping Policy'}
                 </Link>
               </li>
               <li>
                 <Link to="/policy/returns" className="text-gray-600 hover:text-primary transition-colors text-sm">
-                  الاسترجاع والاستبدال
+                  {t?.footer?.returnsPolicy || 'Returns & Exchanges'}
                 </Link>
               </li>
               <li>
                 <Link to="/faq" className="text-gray-600 hover:text-primary transition-colors text-sm">
-                  الأسئلة الشائعة
+                  {t?.footer?.faq || 'FAQ'}
                 </Link>
               </li>
             </ul>
           </div>
 
           {/* Column 4: Newsletter */}
-          <div className="text-right">
-            <h3 className="font-bold text-gray-900 text-lg mb-4">النشرة البريدية</h3>
+          <div className="text-start">
+            <h3 className="font-bold text-gray-900 text-lg mb-4">{t?.footer?.newsletter || 'Newsletter'}</h3>
             <p className="text-gray-600 text-sm mb-4">
-              اشترك للحصول على أحدث العروض والخصومات
+              {t?.footer?.newsletterDesc || 'Subscribe for the latest offers and discounts'}
             </p>
-            <form onSubmit={handleSubscribe} className="flex gap-2 mb-4">
+            <form onSubmit={handleSubscribe} className={`flex gap-2 mb-4 ${direction === 'rtl' ? 'flex-row-reverse' : 'flex-row'}`}>
+              <Input
+                type="email"
+                placeholder={t?.footer?.emailPlaceholder || 'Your email'}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-gray-50 border-gray-200"
+                dir="ltr"
+              />
               <Button type="submit" className="bg-primary hover:bg-primary/90 text-white shrink-0">
                 <Send size={16} />
               </Button>
-              <Input
-                type="email"
-                placeholder="بريدك الإلكتروني"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="text-right bg-gray-50 border-gray-200"
-              />
             </form>
 
             {/* Payment Methods */}
-            <div className="flex gap-2 justify-end items-center flex-wrap">
-              <span className="text-xs text-gray-500">طرق الدفع:</span>
+            <div className={`flex gap-2 ${direction === 'rtl' ? 'justify-end' : 'justify-start'} items-center flex-wrap`}>
+              <span className="text-xs text-gray-500">{t?.footer?.paymentMethods || 'Payment Methods'}:</span>
               <div className="flex gap-2 items-center">
                 <div className="w-10 h-6 bg-gray-100 rounded flex items-center justify-center">
                   <CreditCard size={14} className="text-gray-600" />
@@ -166,7 +167,7 @@ const Footer = () => {
                   <Banknote size={14} className="text-gray-600" />
                 </div>
                 <span className="bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full text-xs font-medium">
-                  قريباً
+                  {t?.footer?.comingSoon || 'Coming Soon'}
                 </span>
               </div>
             </div>
@@ -180,12 +181,12 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-3 text-sm">
             {/* Copyright */}
             <div className="text-gray-600">
-              © {new Date().getFullYear()} Sarraly. All Rights Reserved.
+              © {new Date().getFullYear()} Sarraly. {t?.footer?.copyright || 'All Rights Reserved'}.
             </div>
 
             {/* Developer Credit */}
             <div className="text-gray-600">
-              Developed by{' '}
+              {t?.footer?.developedBy || 'Developed by'}{' '}
               <a
                 href="https://ahmed-hany-dev-portfolio.vercel.app/"
                 target="_blank"

@@ -3,13 +3,16 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguageSafe } from '@/contexts/LanguageContext';
 import { Button } from './ui/button';
 import { LogOut, Shield, Moon, Sun, Store } from 'lucide-react';
 import { toast } from 'sonner';
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 
 const AppHeader = () => {
   const { user, logout, isAdmin, isVendor } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { t, direction } = useLanguageSafe();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -22,22 +25,22 @@ const AppHeader = () => {
 
   const handleLogout = () => {
     logout();
-    toast.success('Logged out successfully');
+    toast.success('تم تسجيل الخروج بنجاح');
     navigate('/login');
   };
 
   const handleAdminLogout = () => {
     logout();
-    toast.success('Logged out from admin panel');
+    toast.success('تم تسجيل الخروج من لوحة الإدارة');
     navigate('/admin-login');
   };
 
   // Determine user role badge
   const getRoleBadge = () => {
     if (!user) return null;
-    if (user.role === 'SUPER_ADMIN') return "(Super Admin)";
-    if (user.role === 'ADMIN') return "(Admin)";
-    if (user.role === 'VENDOR') return "(Vendor)";
+    if (user.role === 'SUPER_ADMIN') return "(مدير عام)";
+    if (user.role === 'ADMIN') return "(مدير)";
+    if (user.role === 'VENDOR') return "(بائع)";
     return null;
   };
 
@@ -48,11 +51,11 @@ const AppHeader = () => {
           <div className="flex justify-between items-center">
             {isAdminPage ? (
               <Link to="/admin" className="text-xl font-bold text-foreground flex items-center">
-                <Shield className="mr-2" /> Admin Panel
+                <Shield className="ml-2" /> لوحة الإدارة
               </Link>
             ) : isVendorPage ? (
               <Link to="/vendor" className="text-xl font-bold text-foreground flex items-center">
-                <Store className="mr-2" /> Vendor Panel
+                <Store className="ml-2" /> لوحة البائع
               </Link>
             ) : (
               <Link to="/" className="flex items-center">
@@ -78,6 +81,9 @@ const AppHeader = () => {
                 )}
               </Button>
 
+              {/* Language Switcher */}
+              <LanguageSwitcher variant="ghost" size="sm" />
+
               {user ? (
                 <div className="flex items-center gap-3">
                   <div className="text-sm text-muted-foreground">
@@ -89,7 +95,7 @@ const AppHeader = () => {
                     <Link to="/admin">
                       <Button variant="outline" size="sm" className="flex items-center gap-1">
                         <Shield className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline text-xs">Admin</span>
+                        <span className="hidden sm:inline text-xs">الإدارة</span>
                       </Button>
                     </Link>
                   )}
@@ -99,7 +105,7 @@ const AppHeader = () => {
                     <Link to="/vendor">
                       <Button variant="outline" size="sm" className="flex items-center gap-1">
                         <Store className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline text-xs">Vendor</span>
+                        <span className="hidden sm:inline text-xs">متجري</span>
                       </Button>
                     </Link>
                   )}
@@ -109,7 +115,7 @@ const AppHeader = () => {
                     <Link to="/become-vendor">
                       <Button variant="ghost" size="sm" className="flex items-center gap-1 text-primary hover:text-primary/80">
                         <Store className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline text-xs">Sell with us</span>
+                        <span className="hidden sm:inline text-xs">{t?.nav?.becomeVendor || 'ابدأ البيع'}</span>
                       </Button>
                     </Link>
                   )}
@@ -121,24 +127,24 @@ const AppHeader = () => {
                     className="flex items-center gap-1"
                   >
                     <LogOut className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline text-xs">Logout</span>
+                    <span className="hidden sm:inline text-xs">{t?.nav?.logout || 'خروج'}</span>
                   </Button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <div className="text-sm text-muted-foreground mr-2">
-                    Welcome, Guest
+                  <div className="text-sm text-muted-foreground ml-2">
+                    {t?.hero?.welcome || 'أهلاً بك'}، {t?.common?.guest || 'زائر'}
                   </div>
                   {/* Sell With Us CTA - Always visible for guests */}
                   <Link to="/become-vendor">
                     <Button variant="outline" size="sm" className="flex items-center gap-1 text-primary border-primary hover:bg-primary/10">
                       <Store className="h-3.5 w-3.5" />
-                      <span className="text-xs">Sell with us</span>
+                      <span className="text-xs">{t?.nav?.becomeVendor || 'ابدأ البيع'}</span>
                     </Button>
                   </Link>
                   <Link to="/login">
                     <Button variant="default" size="sm" className="text-xs">
-                      Login
+                      {t?.nav?.login || 'دخول'}
                     </Button>
                   </Link>
                 </div>

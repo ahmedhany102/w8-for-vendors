@@ -11,6 +11,7 @@ import CartDatabase from "@/models/CartDatabase";
 import { ProductVariant } from '@/hooks/useProductVariants';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useVendorContext } from '@/hooks/useVendorContext';
+import { useLanguageSafe } from '@/contexts/LanguageContext';
 
 // 🔴 Image optimization helper to reduce Supabase egress
 const getOptimizedUrl = (
@@ -42,6 +43,7 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
 
   // Get vendor context for vendor-scoped navigation
   const { isVendorContext, vendorSlug } = useVendorContext();
+  const { t } = useLanguageSafe();
 
   useEffect(() => {
     if (variants.length > 0) {
@@ -373,8 +375,8 @@ const ProductCard = ({ product, className = '', variants = [] }: ProductCardProp
             : 'bg-primary hover:bg-primary/90 text-primary-foreground'
             }`}
         >
-          <ShoppingCart className="w-4 h-4 mr-2" />
-          {isOutOfStock ? 'غير متوفر' : 'أضف للسلة'}
+          <ShoppingCart className="w-4 h-4 me-2" />
+          {isOutOfStock ? (t?.products?.outOfStock || 'Out of Stock') : (t?.products?.addToCart || 'Add to Cart')}
         </Button>
       </CardFooter>
     </Card>

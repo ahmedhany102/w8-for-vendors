@@ -85,11 +85,11 @@ const Cart = () => {
       if (success) {
         const updatedItems = cartItems.filter(item => item.id !== itemId);
         setCartItems(updatedItems);
-        toast.success('Item removed from cart');
+        toast.success('تم حذف المنتج من السلة');
       }
     } catch (error) {
       console.error('Error removing item:', error);
-      toast.error('Failed to remove item from cart');
+      toast.error('فشل في حذف المنتج');
     }
   };
 
@@ -100,17 +100,17 @@ const Cart = () => {
 
       if (success) {
         setCartItems([]);
-        toast.success('Cart cleared');
+        toast.success('تم إفراغ السلة');
       }
     } catch (error) {
       console.error('Error clearing cart:', error);
-      toast.error('Failed to clear cart');
+      toast.error('فشل في إفراغ السلة');
     }
   };
 
   const handleProceedToCheckout = () => {
     if (cartItems.length === 0) {
-      toast.error('Your cart is empty');
+      toast.error('السلة فارغة');
       return;
     }
 
@@ -152,7 +152,7 @@ const Cart = () => {
       setCartItems([]);
 
       // Show success message and redirect based on context
-      toast.success('Order placed successfully!');
+      toast.success('تم إرسال الطلب بنجاح!');
 
       // Stay in vendor context if applicable
       if (isVendorContext && vendorSlug) {
@@ -239,21 +239,21 @@ const Cart = () => {
               className="data-[state=active]:bg-primary-foreground data-[state=active]:text-primary py-3"
               disabled={activeTab === 'checkout'}
             >
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Shopping Cart
+              <ShoppingCart className="h-4 w-4 ml-2" />
+              سلة التسوق
             </TabsTrigger>
             <TabsTrigger
               value="checkout"
               className="data-[state=active]:bg-primary-foreground data-[state=active]:text-primary py-3"
               disabled={cartItems.length === 0}
             >
-              <CircleDollarSign className="h-4 w-4 mr-2" />
-              Checkout
+              <CircleDollarSign className="h-4 w-4 ml-2" />
+              إتمام الشراء
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="cart" className="space-y-4">
-            <h1 className="text-2xl font-bold mb-6">Your Cart</h1>
+            <h1 className="text-2xl font-bold mb-6">سلتك</h1>
 
             {isLoading ? (
               <div className="flex justify-center items-center h-40">
@@ -262,12 +262,12 @@ const Cart = () => {
             ) : cartItems.length === 0 ? (
               <div className="text-center py-10">
                 <ShoppingCart className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-                <h2 className="text-2xl font-semibold mb-2">Your cart is empty</h2>
-                <p className="text-gray-500 mb-6">Add items to your cart to proceed with checkout.</p>
+                <h2 className="text-2xl font-semibold mb-2">سلة التسوق فارغة</h2>
+                <p className="text-gray-500 mb-6">أضف منتجات للسلة لإتمام الشراء</p>
                 <Button
                   onClick={handleContinueShopping}
                 >
-                  Browse Products
+                  تصفح المنتجات
                 </Button>
               </div>
             ) : (
@@ -275,13 +275,13 @@ const Cart = () => {
                 <div className="lg:col-span-2">
                   <Card>
                     <CardHeader className="bg-primary text-primary-foreground py-3">
-                      <CardTitle>Cart Items ({cartItems.length})</CardTitle>
+                      <CardTitle>المنتجات ({cartItems.length})</CardTitle>
                     </CardHeader>
                     <CardContent className="p-4">
                       <div className="space-y-4">
                         {cartItems.map((item) => (
-                          <div key={item.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-3 border-b border-gray-200 last:border-b-0 last:pb-0">
-                            <div className="flex items-center">
+                          <div key={item.id} className="flex flex-col sm:flex-row-reverse justify-between items-start sm:items-center py-3 border-b border-gray-200 last:border-b-0 last:pb-0">
+                            <div className="flex flex-row-reverse items-center">
                               {item.imageUrl && (
                                 <img
                                   src={item.imageUrl}
@@ -331,12 +331,12 @@ const Cart = () => {
                           className="border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600"
                           onClick={handleClearCart}
                         >
-                          <Trash2 size={16} className="mr-2" /> Clear Cart
+                          <Trash2 size={16} className="ml-2" /> إفراغ السلة
                         </Button>
                         <Button
                           onClick={handleContinueShopping}
                         >
-                          <ArrowLeft size={16} className="mr-2" /> Continue Shopping
+                          <ArrowLeft size={16} className="ml-2" /> متابعة التسوق
                         </Button>
                       </div>
                     </CardContent>
@@ -346,37 +346,37 @@ const Cart = () => {
                 <div>
                   <Card>
                     <CardHeader className="bg-primary text-primary-foreground py-3">
-                      <CardTitle>Order Summary</CardTitle>
+                      <CardTitle>ملخص الطلب</CardTitle>
                     </CardHeader>
                     <CardContent className="p-4 space-y-4">
                       <div className="flex justify-between py-2">
-                        <span>Subtotal</span>
-                        <span className="font-medium">{subtotal.toFixed(2)} EGP</span>
+                        <span>المجموع الفرعي</span>
+                        <span className="font-medium">{subtotal.toFixed(2)} ج.م</span>
                       </div>
 
                       <div className="flex justify-between py-2 text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Truck className="w-4 h-4" />
-                          Shipping
+                          الشحن
                         </span>
-                        <span className="text-sm">Calculated at checkout</span>
+                        <span className="text-sm">يحسب عند الدفع</span>
                       </div>
                       <Separator />
                       <div className="flex justify-between py-2">
-                        <span className="font-bold">Subtotal</span>
-                        <span className="font-bold">{subtotal.toFixed(2)} EGP</span>
+                        <span className="font-bold">المجموع الفرعي</span>
+                        <span className="font-bold">{subtotal.toFixed(2)} ج.م</span>
                       </div>
 
                       <Button
                         className="w-full mt-4"
                         onClick={handleProceedToCheckout}
                       >
-                        Proceed to Checkout
+                        إتمام الشراء
                       </Button>
 
                       <div className="flex items-center justify-center text-xs text-gray-500 mt-4">
                         <ShieldCheck size={14} className="mr-2" />
-                        <span>Secure Checkout</span>
+                        <span>دفع آمن</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -391,17 +391,17 @@ const Cart = () => {
                 className="mr-4"
                 onClick={() => setActiveTab('cart')}
               >
-                <ArrowLeft size={16} className="mr-2" />
-                Back to Cart
+                <ArrowLeft size={16} className="ml-2" />
+                العودة للسلة
               </Button>
-              <h1 className="text-2xl font-bold">Checkout</h1>
+              <h1 className="text-2xl font-bold">إتمام الشراء</h1>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <Card>
                   <CardHeader className="bg-gradient-to-r from-primary to-amber-700 text-white py-3">
-                    <CardTitle>Complete Your Order</CardTitle>
+                    <CardTitle>أكمل طلبك</CardTitle>
                   </CardHeader>
                   <CardContent className="p-4">
                     <OrderForm
@@ -421,7 +421,7 @@ const Cart = () => {
               <div>
                 <Card>
                   <CardHeader className="bg-gradient-to-r from-primary to-amber-700 text-white py-3">
-                    <CardTitle>Order Summary</CardTitle>
+                    <CardTitle>ملخص الطلب</CardTitle>
                   </CardHeader>
                   <CardContent className="p-4">
                     <div className="max-h-80 overflow-y-auto mb-4">
@@ -440,8 +440,8 @@ const Cart = () => {
 
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span>Subtotal</span>
-                        <span>{subtotal.toFixed(2)} EGP</span>
+                        <span>المجموع الفرعي</span>
+                        <span>{subtotal.toFixed(2)} ج.م</span>
                       </div>
                       <div className="flex justify-between text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
@@ -463,7 +463,7 @@ const Cart = () => {
                       {!appliedCoupon ? (
                         <div className="flex gap-2">
                           <Input
-                            placeholder="Enter coupon code"
+                            placeholder="أدخل كود الخصم"
                             value={couponCode}
                             onChange={(e) => setCouponCode(e.target.value)}
                             className="flex-1"
@@ -471,13 +471,13 @@ const Cart = () => {
                           <Button
                             onClick={handleApplyCoupon}
                           >
-                            Apply
+                            تطبيق
                           </Button>
                         </div>
                       ) : (
                         <div className="flex items-center justify-between bg-primary/10 p-2 rounded">
                           <span className="text-sm text-primary">
-                            Coupon applied: {appliedCoupon.code} ({appliedCoupon.discount}% off)
+                            تم تطبيق الكوبون: {appliedCoupon.code} (خصم {appliedCoupon.discount}%)
                           </span>
                           <Button
                             variant="ghost"
@@ -485,7 +485,7 @@ const Cart = () => {
                             onClick={handleRemoveCoupon}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
-                            Remove
+                            إزالة
                           </Button>
                         </div>
                       )}
