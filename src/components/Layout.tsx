@@ -18,7 +18,7 @@ const Layout = ({ children, hideFooter = false, hideGlobalHeader = false }: Layo
   return (
     <div key={direction} dir={direction} className="flex flex-col min-h-screen">
       {!hideGlobalHeader && <AppHeader />}
-      <main className="flex-grow pb-16 md:pb-0">{children}</main>
+      <main className="flex-grow pb-20">{children}</main>
       {!hideFooter && <Footer />}
     </div>
   );

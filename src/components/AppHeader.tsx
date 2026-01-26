@@ -39,35 +39,66 @@ const AppHeader = () => {
   // Determine user role badge
   const getRoleBadge = () => {
     if (!user) return null;
-    if (user.role === 'SUPER_ADMIN') return "(مدير عام)";
-    if (user.role === 'ADMIN') return "(مدير)";
-    if (user.role === 'VENDOR') return "(بائع)";
+    if (user.role === 'SUPER_ADMIN') return direction === 'rtl' ? "(مدير عام)" : "(CEO)";
+    if (user.role === 'ADMIN') return direction === 'rtl' ? "(مدير)" : "(Admin)";
+    if (user.role === 'VENDOR') return direction === 'rtl' ? "(بائع)" : "(Vendor)";
     return null;
+  };
+
+  // Get display name based on role - NOT email
+  const getUserDisplayName = (): string => {
+    if (!user) return direction === 'rtl' ? 'ضيف' : 'Guest';
+    
+    const role = user.role;
+    
+    // Admin/Super Admin
+    if (role === 'SUPER_ADMIN' || role === 'ADMIN') {
+      return direction === 'rtl' ? 'المدير' : 'Admin';
+    }
+    
+    // Vendor
+    if (role === 'VENDOR') {
+      return direction === 'rtl' ? 'التاجر' : 'Vendor';
+    }
+    
+    // Regular user - short name
+    const firstName = user.user_metadata?.first_name || user.user_metadata?.name;
+    if (firstName && firstName.length < 15) {
+      return firstName;
+    }
+    
+    // Fallback to short email prefix
+    if (user.email) {
+      const prefix = user.email.split('@')[0];
+      return prefix.length > 10 ? prefix.substring(0, 10) : prefix;
+    }
+    
+    return direction === 'rtl' ? 'مستخدم' : 'User';
   };
 
   return (
     <header className="w-full bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 border-b border-border shadow-sm">
-      <div className="container px-4 py-3 mx-auto">
+      <div className="container px-3 md:px-4 py-2 md:py-3 mx-auto">
         <div className="flex flex-col gap-2">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center gap-2 md:gap-4">
             {isAdminPage ? (
-              <Link to="/admin" className="text-xl font-bold text-foreground flex items-center">
-                <Shield className="ml-2" /> لوحة الإدارة
+              <Link to="/admin" className="text-lg md:text-xl font-bold text-foreground flex items-center flex-shrink-0">
+                <Shield className="ml-2 h-4 w-4 md:h-5 md:w-5" /> <span className="hidden xs:inline">لوحة الإدارة</span>
               </Link>
             ) : isVendorPage ? (
-              <Link to="/vendor" className="text-xl font-bold text-foreground flex items-center">
-                <Store className="ml-2" /> لوحة البائع
+              <Link to="/vendor" className="text-lg md:text-xl font-bold text-foreground flex items-center flex-shrink-0">
+                <Store className="ml-2 h-4 w-4 md:h-5 md:w-5" /> <span className="hidden xs:inline">لوحة البائع</span>
               </Link>
             ) : (
-              <Link to="/" className="flex items-center">
+              <Link to="/" className="flex items-center flex-shrink-0">
                 <img
                   src="/logo.png"
                   alt="Sarraly Logo"
-                  className="h-10 md:h-14 w-auto object-contain"
+                  className="h-8 md:h-10 lg:h-14 w-auto object-contain"
                 />
               </Link>
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2">
               <Button
                 variant="ghost"
                 size="sm"
@@ -87,16 +118,16 @@ const AppHeader = () => {
 
               {user ? (
                 <div className="flex items-center gap-3">
-                  <div className="text-sm text-muted-foreground">
-                    {user.name} {getRoleBadge()}
+                  <div className="text-sm text-muted-foreground hidden md:block">
+                    {getUserDisplayName()} {getRoleBadge()}
                   </div>
 
                   {/* Show admin dashboard link for admins */}
                   {isSuperAdminOrAdmin && !isAdminPage && (
                     <Link to="/admin">
-                      <Button variant="outline" size="sm" className="flex items-center gap-1">
-                        <Shield className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline text-xs">الإدارة</span>
+                      <Button variant="outline" size="sm" className="h-8 md:h-9 px-2 md:px-3 flex items-center gap-1">
+                        <Shield className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                        <span className="hidden md:inline text-xs">الإدارة</span>
                       </Button>
                     </Link>
                   )}
@@ -104,9 +135,9 @@ const AppHeader = () => {
                   {/* Show vendor dashboard link for vendors (NOT for admins) */}
                   {isVendor && !isSuperAdminOrAdmin && !isAdminPage && !isVendorPage && (
                     <Link to="/vendor">
-                      <Button variant="outline" size="sm" className="flex items-center gap-1">
-                        <Store className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline text-xs">متجري</span>
+                      <Button variant="outline" size="sm" className="h-8 md:h-9 px-2 md:px-3 flex items-center gap-1">
+                        <Store className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                        <span className="hidden md:inline text-xs">متجري</span>
                       </Button>
                     </Link>
                   )}
@@ -114,9 +145,9 @@ const AppHeader = () => {
                   {/* Show become vendor link for regular users only (NOT for admins or existing vendors) */}
                   {!isVendor && !isSuperAdminOrAdmin && !isAdminPage && !isVendorPage && (
                     <Link to="/become-vendor">
-                      <Button variant="ghost" size="sm" className="flex items-center gap-1 text-primary hover:text-primary/80">
-                        <Store className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline text-xs">{t?.nav?.becomeVendor || 'ابدأ البيع'}</span>
+                      <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 flex items-center gap-1 text-primary hover:text-primary/80">
+                        <Store className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                        <span className="hidden md:inline text-xs">{t?.nav?.becomeVendor || 'ابدأ البيع'}</span>
                       </Button>
                     </Link>
                   )}
@@ -125,26 +156,28 @@ const AppHeader = () => {
                     variant="outline"
                     size="sm"
                     onClick={isAdminPage ? handleAdminLogout : handleLogout}
-                    className="flex items-center gap-1"
+                    className="h-8 md:h-9 px-2 md:px-3 flex items-center gap-1"
                   >
-                    <LogOut className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline text-xs">{t?.nav?.logout || 'خروج'}</span>
+                    <LogOut className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                    <span className="hidden md:inline text-xs">{t?.nav?.logout || 'خروج'}</span>
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <div className="text-sm text-muted-foreground ml-2">
+                <div className="flex items-center gap-1 md:gap-2">
+                  {/* Welcome message - Hidden on mobile */}
+                  <div className="hidden lg:block text-sm text-muted-foreground">
                     {t?.hero?.welcome || 'أهلاً بك'}، {t?.common?.guest || 'زائر'}
                   </div>
-                  {/* Sell With Us CTA - Always visible for guests */}
-                  <Link to="/become-vendor">
-                    <Button variant="outline" size="sm" className="flex items-center gap-1 text-primary border-primary hover:bg-primary/10">
-                      <Store className="h-3.5 w-3.5" />
-                      <span className="text-xs">{t?.nav?.becomeVendor || 'ابدأ البيع'}</span>
+                  {/* Sell With Us CTA - Compact on mobile */}
+                  <Link to="/become-vendor" className="hidden sm:block">
+                    <Button variant="outline" size="sm" className="h-8 md:h-9 px-2 md:px-3 flex items-center gap-1 text-primary border-primary hover:bg-primary/10">
+                      <Store className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                      <span className="text-xs hidden md:inline">{t?.nav?.becomeVendor || 'ابدأ البيع'}</span>
+                      <span className="text-xs md:hidden">{direction === 'rtl' ? 'بيع' : 'Sell'}</span>
                     </Button>
                   </Link>
                   <Link to="/login">
-                    <Button variant="default" size="sm" className="text-xs">
+                    <Button variant="default" size="sm" className="h-8 md:h-9 px-3 md:px-4 text-xs">
                       {t?.nav?.login || 'دخول'}
                     </Button>
                   </Link>

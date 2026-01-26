@@ -5,6 +5,7 @@ import Layout from "@/components/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguageSafe } from "@/contexts/LanguageContext";
 import ProductManagement from "@/components/admin/ProductManagement";
 import AdminProductsManagement from "@/components/admin/AdminProductsManagement";
 import AdminOrdersManagement from "@/components/admin/AdminOrdersManagement";
@@ -18,12 +19,15 @@ import AdminDashboardStats from "@/components/AdminDashboardStats";
 import { ReviewsManagement } from "@/components/admin/ReviewsManagement";
 import SectionsManager from "@/components/admin/SectionsManager";
 import RevenueAnalytics from "@/components/admin/RevenueAnalytics";
+import AdminHeader from "@/components/admin/AdminHeader";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 import { Home, LogOut, Package, Settings, Ticket, Users, FolderTree, Star, Store, ShoppingCart, LayoutGrid, BarChart3 } from "lucide-react";
 import { useSupabaseProducts, useSupabaseUsers, useSupabaseOrders } from "@/hooks/useSupabaseData";
 import AdminVendors from "@/pages/admin/AdminVendors";
 
 const Admin = ({ activeTab = "dashboard" }) => {
   const { user, logout } = useAuth();
+  const { direction } = useLanguageSafe();
   const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState(activeTab);
 
@@ -51,38 +55,41 @@ const Admin = ({ activeTab = "dashboard" }) => {
   });
 
   return (
-    <Layout hideFooter>
-      <div className="container mx-auto py-4 px-4 md:px-0">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row-reverse justify-between items-start mb-6">
-          <div>
-            <h1 className="text-2xl font-bold mb-2">لوحة التحكم</h1>
-            <p className="text-gray-600">
-              مرحباً {user.displayName || user.name || user.email}، يمكنك إدارة المتجر من هنا.
-            </p>
-          </div>
-          <Button
-            onClick={handleLogout}
-            className="bg-red-600 hover:bg-red-700 mt-4 md:mt-0"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            تسجيل الخروج
-          </Button>
+    <div className="min-h-screen bg-gray-50" dir={direction}>
+      <div className="flex h-screen overflow-hidden">
+        
+        {/* Desktop Sidebar - Hidden on mobile */}
+        <div className="hidden lg:block flex-shrink-0">
+          <AdminSidebar />
         </div>
 
-        {/* Stats Dashboard */}
-        <AdminDashboardStats
-          totalProducts={products?.length || 0}
-          totalUsers={users?.length || 0}
-          totalOrders={orders?.length || 0}
-          loading={statsLoading}
-        />
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          
+          {/* Header with mobile menu */}
+          <AdminHeader 
+            showMenuButton={true}
+            sidebarContent={<AdminSidebar onNavigate={() => {}} />}
+            onLogout={handleLogout}
+          />
+
+          {/* Page Content */}
+          <main className="flex-1 overflow-y-auto">
+            <div className="container mx-auto py-4 px-4 md:px-6">
+
+              {/* Stats Dashboard */}
+              <AdminDashboardStats
+                totalProducts={products?.length || 0}
+                totalUsers={users?.length || 0}
+                totalOrders={orders?.length || 0}
+                loading={statsLoading}
+              />
 
         {/* Tabs */}
         <Tabs
           value={currentTab}
           onValueChange={setCurrentTab}
-          className="w-full"
+          className="w-full mt-6"
         >
           <div className="w-full overflow-x-auto pb-2 mb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
             <TabsList className="inline-flex flex-nowrap min-w-max gap-1 pr-8">
@@ -213,8 +220,11 @@ const Admin = ({ activeTab = "dashboard" }) => {
             <UsersPanel />
           </TabsContent>
         </Tabs>
+            </div>
+          </main>
+        </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

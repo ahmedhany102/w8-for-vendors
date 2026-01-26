@@ -10,9 +10,35 @@ const UserWelcome = () => {
 
   if (!user) return null;
 
-  // Extract just the name part before @ if it's an email
-  // Adding a safety check to prevent the "includes" error
-  const displayName = user.name && user.name.includes('@') ? user.name.split('@')[0] : user.name || 'User';
+  // Get display name based on role - NOT email
+  const getDisplayName = (): string => {
+    const role = user.user_metadata?.role || user.role;
+    
+    // Admin/Super Admin
+    if (role === 'SUPER_ADMIN' || role === 'super_admin' || role === 'ADMIN' || role === 'admin') {
+      return 'المدير';
+    }
+    
+    // Vendor
+    if (role === 'VENDOR' || role === 'vendor') {
+      return 'التاجر';
+    }
+    
+    // Regular user - short name
+    const firstName = user.user_metadata?.first_name || user.user_metadata?.name;
+    if (firstName && firstName.length < 15) {
+      return firstName;
+    }
+    
+    // Fallback
+    if (user.name && !user.name.includes('@')) {
+      return user.name.length > 12 ? user.name.substring(0, 12) : user.name;
+    }
+    
+    return 'مستخدم';
+  };
+
+  const displayName = getDisplayName();
 
   return (
     <div className="flex items-center gap-4">

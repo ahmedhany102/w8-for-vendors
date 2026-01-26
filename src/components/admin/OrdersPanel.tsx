@@ -145,7 +145,7 @@ const OrdersPanel = () => {
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
-          <DialogHeader>
+          <DialogHeader className="text-start">
             <DialogTitle className="text-xl text-green-800">Order Details</DialogTitle>
             <DialogDescription className="text-gray-600 dark:text-gray-400">
               Order #{selectedOrder?.order_number} - {selectedOrder ? new Date(selectedOrder.created_at).toLocaleDateString() : ''}
@@ -156,19 +156,19 @@ const OrdersPanel = () => {
             <div className="space-y-6 py-4">
               {/* Customer Information */}
               <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-                <h3 className="font-semibold text-green-800 dark:text-green-300 border-b border-green-200 dark:border-green-700 pb-2 mb-2">Customer Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="font-semibold text-green-800 dark:text-green-300 border-b border-green-200 dark:border-green-700 pb-2 mb-2 text-start">Customer Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-start">
                   <div>
                     <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Name</p>
                     <p className="text-gray-900 dark:text-gray-100">{selectedOrder.customer_info?.name}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</p>
-                    <p className="text-gray-900 dark:text-gray-100">{selectedOrder.customer_info?.email}</p>
+                    <p className="text-gray-900 dark:text-gray-100" dir="ltr">{selectedOrder.customer_info?.email}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</p>
-                    <p className="text-gray-900 dark:text-gray-100">{selectedOrder.customer_info?.phone}</p>
+                    <p className="text-gray-900 dark:text-gray-100" dir="ltr">{selectedOrder.customer_info?.phone}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Address</p>
@@ -181,7 +181,7 @@ const OrdersPanel = () => {
               
               {/* Order Items */}
               <div>
-                <h3 className="font-semibold text-green-800 dark:text-green-300 border-b border-green-200 dark:border-green-700 pb-2 mb-4">Order Items</h3>
+                <h3 className="font-semibold text-green-800 dark:text-green-300 border-b border-green-200 dark:border-green-700 pb-2 mb-4 text-start">Order Items</h3>
                 <div className="rounded-md border overflow-hidden">
                   <Table>
                     <TableHeader className="bg-green-100 dark:bg-green-900/30">

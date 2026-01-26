@@ -103,7 +103,7 @@ const OrderDetailsDialog: React.FC<{
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="text-start">
           <DialogTitle>تفاصيل الطلب #{orderNumber}</DialogTitle>
           <DialogDescription>
             عرض كامل للطلب مع تفاصيل كل بائع
@@ -119,20 +119,20 @@ const OrderDetailsDialog: React.FC<{
             {/* Customer Info */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg">بيانات العميل</CardTitle>
+                <CardTitle className="text-lg text-start">بيانات العميل</CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-start">
                 <div>
                   <span className="text-muted-foreground">الاسم:</span>
                   <p className="font-medium">{customerInfo.name || 'غير معروف'}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">البريد:</span>
-                  <p className="font-medium">{customerInfo.email || 'غير معروف'}</p>
+                  <p className="font-medium" dir="ltr">{customerInfo.email || 'غير معروف'}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">الهاتف:</span>
-                  <p className="font-medium">{customerInfo.phone || 'غير معروف'}</p>
+                  <p className="font-medium" dir="ltr">{customerInfo.phone || 'غير معروف'}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">العنوان:</span>
@@ -145,9 +145,9 @@ const OrderDetailsDialog: React.FC<{
             {orderInfo && (
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">ملخص الطلب</CardTitle>
+                  <CardTitle className="text-lg text-start">ملخص الطلب</CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-start">
                   <div>
                     <span className="text-muted-foreground">إجمالي الطلب:</span>
                     <p className="font-bold text-lg">{orderInfo.total_amount} ج.م</p>

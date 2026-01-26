@@ -16,6 +16,37 @@ const Index = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState<'home' | 'products'>('home');
 
+  // Helper to get user display name based on role
+  const getUserDisplayName = (user: any): string => {
+    if (!user) return direction === 'rtl' ? 'ضيف' : 'Guest';
+    
+    const role = user.user_metadata?.role || user.role;
+    
+    // Admin/Super Admin
+    if (role === 'SUPER_ADMIN' || role === 'super_admin' || role === 'ADMIN' || role === 'admin') {
+      return direction === 'rtl' ? 'المدير' : 'CEO';
+    }
+    
+    // Vendor
+    if (role === 'VENDOR' || role === 'vendor') {
+      return direction === 'rtl' ? 'التاجر' : 'Vendor';
+    }
+    
+    // Regular user - use first name or short email prefix
+    const firstName = user.user_metadata?.first_name || user.user_metadata?.name;
+    if (firstName && firstName.length < 15) {
+      return firstName;
+    }
+    
+    // Fallback to email prefix
+    if (user.email) {
+      const prefix = user.email.split('@')[0];
+      return prefix.length > 12 ? prefix.substring(0, 12) + '...' : prefix;
+    }
+    
+    return direction === 'rtl' ? 'مستخدم' : 'User';
+  };
+
   // Show loading state while maintaining layout to prevent CLS
   if (loading) {
     return (
@@ -61,7 +92,7 @@ const Index = () => {
         {/* Greeting Section for Logged-in Users */}
         {user && (
           <div dir={direction} className="mb-6">
-            <h2 className="text-xl font-bold mb-2">{t?.hero?.welcome || 'Welcome'} {user.name}!</h2>
+            <h2 className="text-xl font-bold mb-2">{t?.hero?.welcome || 'Welcome'} {getUserDisplayName(user)}!</h2>
             <p className="text-muted-foreground">
               {direction === 'rtl' ? 'نتمنى لك تجربة تسوق ممتعة' : 'Enjoy your shopping experience'}
             </p>
