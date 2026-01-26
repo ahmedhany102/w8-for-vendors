@@ -39,14 +39,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onNavigate }) => {
     {
       icon: Tags,
       label: language === 'ar' ? 'الأقسام' : 'Categories',
-      path: '/admin?tab=categories',
-      isTab: true
+      path: '/admin/categories'
     },
     {
       icon: LayoutGrid,
       label: language === 'ar' ? 'السيكشنز' : 'Sections',
-      path: '/admin?tab=sections',
-      isTab: true
+      path: '/admin/sections'
     },
     {
       icon: Package,
@@ -56,8 +54,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onNavigate }) => {
     {
       icon: Store,
       label: language === 'ar' ? 'منتجات البائعين' : 'Vendor Products',
-      path: '/admin?tab=vendor-products',
-      isTab: true
+      path: '/admin/vendor-products'
     },
     {
       icon: ShoppingCart,
@@ -67,8 +64,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onNavigate }) => {
     {
       icon: ShoppingCart,
       label: language === 'ar' ? 'طلبات البائعين' : 'Vendor Orders',
-      path: '/admin?tab=vendor-orders',
-      isTab: true
+      path: '/admin/vendor-orders'
     },
     {
       icon: Ticket,
@@ -88,8 +84,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onNavigate }) => {
     {
       icon: Star,
       label: language === 'ar' ? 'التقييمات' : 'Reviews',
-      path: '/admin?tab=reviews',
-      isTab: true
+      path: '/admin/reviews'
     },
     {
       icon: Store,
@@ -99,8 +94,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onNavigate }) => {
     {
       icon: BarChart3,
       label: language === 'ar' ? 'الإيرادات' : 'Analytics',
-      path: '/admin?tab=analytics',
-      isTab: true
+      path: '/admin/analytics'
     },
     {
       icon: Users,
@@ -111,9 +105,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onNavigate }) => {
 
   const isActive = (path: string, exact = false) => {
     if (exact) {
-      return location.pathname === path;
+      return location.pathname === path || location.pathname === path + '/';
     }
-    return location.pathname.startsWith(path);
+    // For non-exact matches, check if path matches exactly (to avoid /admin matching /admin/products)
+    if (path === '/admin') {
+      return location.pathname === '/admin' || location.pathname === '/admin/';
+    }
+    return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
   const handleClick = () => {

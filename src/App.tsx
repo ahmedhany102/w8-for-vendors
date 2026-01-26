@@ -8,7 +8,6 @@ import Index from './pages/Index';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
-import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
 import Contact from './pages/Contact';
 import Cart from './pages/Cart';
@@ -26,6 +25,23 @@ import SimilarProductsPage from './pages/SimilarProductsPage';
 import ShippingPolicy from './pages/Policies/ShippingPolicy';
 import ReturnPolicy from './pages/Policies/ReturnPolicy';
 import FAQ from './pages/FAQ';
+
+// Admin Layout and Pages
+import AdminLayout from './components/layouts/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminCategories from './pages/admin/AdminCategories';
+import AdminSections from './pages/admin/AdminSections';
+import AdminProducts from './pages/admin/AdminProducts';
+import AdminVendorProducts from './pages/admin/AdminVendorProducts';
+import AdminOrders from './pages/admin/AdminOrders';
+import AdminVendorOrders from './pages/admin/AdminVendorOrders';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminCoupons from './pages/admin/AdminCoupons';
+import AdminContact from './pages/admin/AdminContact';
+import AdminAds from './pages/admin/AdminAds';
+import AdminReviews from './pages/admin/AdminReviews';
+import AdminAnalytics from './pages/admin/AdminAnalytics';
+import AdminVendors from './pages/admin/AdminVendors';
 
 // Vendor context and layout
 import { VendorContextProvider } from './contexts/VendorContext';
@@ -126,16 +142,24 @@ function AppContent() {
             <Route path="/vendor/settings" element={<VendorDashboard />} />
           </Route>
 
-          {/* Admin routes */}
+          {/* Admin routes - Nested under AdminLayout */}
           <Route element={<RequireAuth adminOnly={true} />}>
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/products" element={<Admin activeTab="products" />} />
-            <Route path="/admin/orders" element={<Admin activeTab="orders" />} />
-            <Route path="/admin/users" element={<Admin activeTab="users" />} />
-            <Route path="/admin/coupons" element={<Admin activeTab="coupons" />} />
-            <Route path="/admin/contact" element={<Admin activeTab="contact" />} />
-            <Route path="/admin/ads" element={<Admin activeTab="ads" />} />
-            <Route path="/admin/vendors" element={<Admin activeTab="vendors" />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="categories" element={<AdminCategories />} />
+              <Route path="sections" element={<AdminSections />} />
+              <Route path="products" element={<AdminProducts />} />
+              <Route path="vendor-products" element={<AdminVendorProducts />} />
+              <Route path="orders" element={<AdminOrders />} />
+              <Route path="vendor-orders" element={<AdminVendorOrders />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="coupons" element={<AdminCoupons />} />
+              <Route path="contact" element={<AdminContact />} />
+              <Route path="ads" element={<AdminAds />} />
+              <Route path="reviews" element={<AdminReviews />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
+              <Route path="vendors" element={<AdminVendors />} />
+            </Route>
           </Route>
 
           {/* 404 */}
