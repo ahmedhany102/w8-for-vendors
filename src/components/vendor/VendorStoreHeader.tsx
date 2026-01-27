@@ -89,29 +89,50 @@ const VendorStoreHeader: React.FC<VendorStoreHeaderProps> = ({
                 <div className="container mx-auto px-4">
                     <div className="flex items-center justify-between h-14">
 
-                        {/* LEFT: Hamburger Menu */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setMenuOpen(true)}
-                            className="shrink-0"
-                            aria-label="Open menu"
-                        >
-                            <Menu className="w-5 h-5" />
-                        </Button>
+                        {/* LEFT GROUP: Hamburger Menu + Search */}
+                        <div className="flex items-center gap-3 shrink-0">
+                            {/* Hamburger Menu */}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setMenuOpen(true)}
+                                className="h-10 w-10"
+                                aria-label="Open menu"
+                            >
+                                <Menu className="w-5 h-5" />
+                            </Button>
+
+                            {/* Search Toggle - MOVED TO LEFT GROUP */}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                    if (searchOpen) {
+                                        setSearchOpen(false);
+                                        onSearchChange('');
+                                    } else {
+                                        setSearchOpen(true);
+                                    }
+                                }}
+                                className="h-10 w-10 relative z-10"
+                                aria-label={searchOpen ? "Close search" : "Open search"}
+                            >
+                                {searchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+                            </Button>
+                        </div>
 
                         {/* CENTER: Store Logo (absolutely centered) */}
                         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                             {searchOpen ? (
                                 // Search input replaces logo when active (mobile)
                                 <div className="relative w-48 sm:w-64">
-                                    <Search className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                    <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                                     <Input
                                         type="text"
                                         placeholder={`${t?.common?.search || 'Search'} ${vendorName}...`}
                                         value={searchQuery}
                                         onChange={(e) => onSearchChange(e.target.value)}
-                                        className="h-9 pr-10 rtl:pr-4 rtl:pl-10 text-sm"
+                                        className="h-9 ps-10 pe-3 text-sm"
                                         autoFocus
                                     />
                                 </div>
@@ -137,39 +158,21 @@ const VendorStoreHeader: React.FC<VendorStoreHeaderProps> = ({
                             )}
                         </div>
 
-                        {/* RIGHT: Search Toggle + Cart */}
-                        <div className="flex items-center gap-1">
-                            {/* Search Toggle */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                    if (searchOpen) {
-                                        setSearchOpen(false);
-                                        onSearchChange('');
-                                    } else {
-                                        setSearchOpen(true);
-                                    }
-                                }}
-                                className="shrink-0"
-                                aria-label={searchOpen ? "Close search" : "Open search"}
-                            >
-                                {searchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
-                            </Button>
-
+                        {/* RIGHT GROUP: Cart + Language */}
+                        <div className="flex items-center gap-2 shrink-0 relative z-10">
                             {/* Cart Icon with Badge */}
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => navigate(`/store/${vendorSlug}/cart`)}
-                                className="relative shrink-0"
+                                className="relative h-10 w-10"
                                 aria-label="View cart"
                             >
                                 <ShoppingCart className="w-5 h-5" />
                                 {cartCount > 0 && (
                                     <Badge
                                         variant="destructive"
-                                        className="absolute -top-1 -right-1 rtl:-right-auto rtl:-left-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                                        className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
                                     >
                                         {cartCount > 9 ? '9+' : cartCount}
                                     </Badge>
