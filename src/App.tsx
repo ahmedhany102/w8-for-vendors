@@ -64,7 +64,7 @@ import { LanguageProvider } from './contexts/LanguageContext';
 // ===========================================
 // FACEBOOK PIXEL CONFIGURATION
 // ===========================================
-const FB_PIXEL_ID = '1604831090969670';
+const FB_PIXEL_ID = '1639927200753706';
 
 // Facebook Pixel Tracker Component
 const FacebookPixelTracker: React.FC = () => {
