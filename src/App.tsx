@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { RequireAuth } from './components/RequireAuth';
 import { RequireVendorAuth } from './components/RequireVendorAuth';
@@ -61,6 +61,37 @@ import ScrollToTop from './components/ScrollToTop';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LanguageProvider } from './contexts/LanguageContext';
 
+// ===========================================
+// FACEBOOK PIXEL CONFIGURATION
+// ===========================================
+const FB_PIXEL_ID = '858540438007678';
+
+// Facebook Pixel Tracker Component
+const FacebookPixelTracker: React.FC = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Dynamic import to avoid SSR issues
+    import('react-facebook-pixel')
+      .then((module) => module.default)
+      .then((ReactPixel) => {
+        // Initialize pixel
+        ReactPixel.init(FB_PIXEL_ID, undefined, {
+          autoConfig: true,
+          debug: false,
+        });
+        
+        // Track page view
+        ReactPixel.pageView();
+      })
+      .catch((error) => {
+        console.error('Facebook Pixel initialization error:', error);
+      });
+  }, [location.pathname, location.search]);
+
+  return null;
+};
+
 // Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -92,6 +123,9 @@ function AppContent() {
 
   return (
     <>
+      {/* Facebook Pixel Tracker - Tracks all page views */}
+      <FacebookPixelTracker />
+      
       <div className="flex flex-col min-h-screen w-full">
         <Routes>
           {/* ========== SHORT LINK REDIRECT ROUTE ========== */}

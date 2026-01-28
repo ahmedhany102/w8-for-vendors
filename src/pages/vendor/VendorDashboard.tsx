@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,6 +18,7 @@ import { useVendorOrders } from '@/hooks/useVendorOrders';
 import VendorFooterSettings from '@/components/vendor/VendorFooterSettings';
 import VendorShippingSettings from '@/components/vendor/VendorShippingSettings';
 import { useVendorNotifications } from '@/hooks/useVendorNotifications';
+import { trackCompleteRegistration } from '@/services/facebookPixel';
 
 const VendorDashboard = () => {
   const { user, logout } = useAuth();
@@ -27,9 +28,36 @@ const VendorDashboard = () => {
   const { orders } = useVendorOrders();
   const [vendorId, setVendorId] = React.useState<string | null>(null);
   const [strictRevenue, setStrictRevenue] = React.useState<number>(0);
+  
+  // Ref to track if conversion has been fired (prevent duplicate events)
+  const conversionTrackedRef = useRef(false);
 
   // Enable real-time order notifications
   useVendorNotifications();
+
+  // ===========================================
+  // FACEBOOK PIXEL: TRACK COMPLETE REGISTRATION
+  // ===========================================
+  useEffect(() => {
+    // Only track once when vendor first accesses dashboard after registration
+    if (profile?.status === 'approved' && !conversionTrackedRef.current) {
+      // Check if this is a new registration (from session storage)
+      const isNewRegistration = sessionStorage.getItem('newVendorRegistration');
+      
+      if (isNewRegistration) {
+        // Track the conversion event
+        trackCompleteRegistration({
+          content_name: profile.store_name || 'Vendor Store Registration',
+          value: 0,
+          currency: 'EGP',
+        });
+        
+        // Clear the flag to prevent duplicate tracking
+        sessionStorage.removeItem('newVendorRegistration');
+        conversionTrackedRef.current = true;
+      }
+    }
+  }, [profile?.status, profile?.store_name]);
 
   // Fetch vendor ID for the current user
   React.useEffect(() => {

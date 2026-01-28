@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Store, CheckCircle, Clock, XCircle, AlertCircle } from 'lucide-react';
 import { getStatusLabel, getStatusColor } from '@/hooks/useVendorProfile';
 import { supabase } from '@/integrations/supabase/client';
+import { trackLead } from '@/services/facebookPixel';
 
 const BecomeVendor = () => {
   const { user, loading: authLoading, isVendor } = useAuth();
@@ -154,6 +155,20 @@ const BecomeVendor = () => {
       registrationNotes,
       logoUrl
     );
+    
+    if (success) {
+      // ===========================================
+      // FACEBOOK PIXEL: TRACK LEAD EVENT
+      // ===========================================
+      trackLead({
+        content_name: storeName,
+        content_category: 'Vendor Application',
+      });
+      
+      // Set flag for CompleteRegistration tracking when approved
+      sessionStorage.setItem('newVendorRegistration', 'true');
+    }
+    
     return success;
   };
 
